@@ -5,6 +5,7 @@ from marshmallow import ValidationError
 from app.models import Mechanics, Service_Ticket, db
 from app.extenstions import limiter,cache
 from app.util.auth import token_required 
+from sqlalchemy import func
 
  #  =========================================================================
  
@@ -80,20 +81,26 @@ def update_service_ticket(service_ticket_id):
 @cache.cached(timeout=30)   
 def popular_service_tickets():
     
-    popular_tickets = db.session.query(Service_Ticket).all()
-    
-    popular_tickets.sort(key=lambda ticket: ticket.complete_count, reverse=True)
-    
+    popular_tickets = (
+        db.session.query(
+            Service_Ticket.service_description,
+            func.count(Service_Ticket.id).label('usage_count')
+        )
+        .group_by(Service_Ticket.service_description)
+        .order_by(func.count(Service_Ticket.id).desc())
+        .limit(3)
+        .all()
+    )
+
     ticket_data = [
         {
-            "id": ticket.id,
             "service_description": ticket.service_description,
-            "price": ticket.price,
+            "usage_count": ticket.usage_count
         }
         for ticket in popular_tickets
     ]
     
-    return jsonify(ticket_data[:3]), 200
+    return jsonify(ticket_data), 200
 
 # ==========================================================================
 

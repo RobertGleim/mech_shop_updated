@@ -50,7 +50,7 @@ def create_mechanic():
 @mechanics_bp.route('/', methods=['GET'])
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
-@token_required
+# @token_required
 def read_mechanics():
     mechanics = db.session.query(Mechanics).all()
     return mechanics_schema.jsonify(mechanics), 200
@@ -61,9 +61,9 @@ def read_mechanics():
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
 @token_required
-def read_mechainc(mechanic_id):
-    mechanic_id = request.mechanic_id
-    mechanic = db.session.get(Mechanics, mechanic_id) 
+def read_mechainc(user_id, role):
+   
+    mechanic = db.session.get(Mechanics, user_id) 
     print(f"Mechanic found: {mechanic.first_name} {mechanic.last_name}")
     return mechanic_schema.jsonify(mechanic), 200
 
@@ -72,22 +72,22 @@ def read_mechainc(mechanic_id):
 @mechanics_bp.route('', methods=['DELETE']) 
 @limiter.limit("3 per hour") 
 @token_required
-def delete_mechanic(mechanics_id):
-    mechanic_id = request.mechanic_id
-    mechanic = db.session.get(Mechanics, mechanic_id)
+def delete_mechanic(user_id, role):
+    
+    mechanic = db.session.get(Mechanics, user_id)
     db.session.delete(mechanic)
     db.session.commit()
     print(f"Mechanic deleted: {mechanic.first_name} {mechanic.last_name}")
-    return jsonify({"message": f"Sorry to see you go! {mechanics_id}"}), 200
+    return jsonify({"message": f"Sorry to see you go! {user_id}"}), 200
 
  #  =========================================================================
 
 @mechanics_bp.route('/', methods=['PUT'])
 @limiter.limit("20 per hour", override_defaults=True)
 @token_required
-def update_mechanic(mechanic_id):
-    mechanic_id = request.mechanic_id
-    mechanic = db.session.get(Mechanics, mechanic_id)
+def update_mechanic(user_id, role):
+    
+    mechanic = db.session.get(Mechanics, user_id)
     
     if not mechanic:
         return jsonify({"message": "mechainc not found"}), 404

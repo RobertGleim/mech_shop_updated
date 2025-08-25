@@ -47,20 +47,36 @@ def create_customer():
  
 @customers_bp.route('/', methods=['GET'])
 # limiter left blank to use default limits
-@token_required
+# @token_required
 def read_customers():
-    customers = db.session.query(Customers).all()
-    return customers_schema.jsonify(customers), 200
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 2, type=int)
+    
+    paginated_customers = db.session.query(Customers).paginate(page=page, per_page=per_page,)
+    result = customers_schema.dump(paginated_customers.items)
+    
+    response = {
+        "customers": result,
+        "total": paginated_customers.total,
+        "page": paginated_customers.page,
+        "pages": paginated_customers.pages,
+        "per_page": paginated_customers.per_page,
+        "has_next": paginated_customers.has_next,
+        "has_prev": paginated_customers.has_prev
+    }
+    
+     
+    return jsonify(response), 200
 
  #  =========================================================================
  
 @customers_bp.route('/profile', methods=['GET'])
 # limiter left blank to use default limits
 @token_required
-def read_customer():
-    customer_id = request.customer_id
-    customer = db.session.get(Customers, customer_id) 
-    print(f"Customer found: {customer_id} ")
+def read_customer(user_id,role):
+    
+    customer = db.session.get(Customers, user_id) 
+    print(f"Customer found: {user_id} ")
     return customer_schema.jsonify(customer), 200
 
  #  =========================================================================
@@ -68,22 +84,22 @@ def read_customer():
 @customers_bp.route('', methods=['DELETE'])
 @limiter.limit("3 per hour") 
 @token_required 
-def delete_customer():
-    customer_id = request.customer_id
-    customer = db.session.get(Customers, customer_id)
+def delete_customer(user_id, role):
+    
+    customer = db.session.get(Customers,user_id)
     db.session.delete(customer)
     db.session.commit()
     print(f"Customer deleted: {customer.first_name} {customer.last_name}")
-    return jsonify({"message": f"Sorry to see you go! {customer_id}"}), 200
+    return jsonify({"message": f"Sorry to see you go! {user_id}"}), 200
 
  #  =========================================================================
  
 @customers_bp.route('', methods=['PUT'])
 @limiter.limit("20 per hour", override_defaults=True)
 @token_required
-def update_customer():
-    customer_id = request.customer_id
-    customer = db.session.get(Customers, customer_id)
+def update_customer(user_id, role):
+    
+    customer = db.session.get(Customers, user_id)
     
     if not customer:
         return jsonify({"message": "Customer not found"}), 404

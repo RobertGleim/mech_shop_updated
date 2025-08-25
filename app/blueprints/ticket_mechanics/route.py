@@ -7,6 +7,7 @@ from flask import request, jsonify
 from marshmallow import ValidationError
 from app.models import Customers, Ticket_Mechanics, Service_Ticket, Mechanics, db
 from app.extenstions import limiter, cache
+from sqlalchemy import func
 
  #  =========================================================================
  
@@ -35,43 +36,46 @@ def read_ticket_mechanics():
 
  #  =========================================================================
 
-@ticket_mechanics_bp.route('/<int:ticket_mechanic_id>', methods=['GET'])
+@ticket_mechanics_bp.route('/<int:service_ticket_id>', methods=['GET'])
 @limiter.limit("50 per hour", override_defaults=True)
 @cache.cached(timeout=20)
-def read_ticket_mechanic(ticket_mechanic_id):
-    ticket_mechanic = db.session.get(Ticket_Mechanics, ticket_mechanic_id) 
-    print(f"ticket_mechanics found: {ticket_mechanic_id}")
-    return ticket_mechanic_schema.jsonify(ticket_mechanic), 200
-
- #  =========================================================================
-
-@ticket_mechanics_bp.route('/<int:ticket_mechanics_id>', methods=['DELETE']) 
-@limiter.limit("3 per hour") 
-def delete_ticket_mechanic(ticket_mechanic_id):
-    ticket_mechanic = db.session.get(Ticket_Mechanics, ticket_mechanic_id)
-    db.session.delete(ticket_mechanic)
-    db.session.commit()
-    print(f"ticket_mechanics deleted:{ticket_mechanic_id}")
-    return jsonify({"message": f"ticket was deleted: {ticket_mechanic_id}"}), 200
-
- #  =========================================================================
-
-@ticket_mechanics_bp.route('/<int:ticket_mechanic_id>', methods=['PUT'])
-@limiter.limit("20 per hour", override_defaults=True)
-def update_ticket_mechanic(ticket_mechanic_id):
-    ticket_mechanic = db.session.get(Ticket_Mechanics, ticket_mechanic_id)
+def read_ticket_mechanic(service_ticket_id,):
+    ticket_mechanics = db.session.query(Ticket_Mechanics).filter_by(service_ticket_id=service_ticket_id).all()
+ 
+    if not ticket_mechanics:
+        return jsonify({"message": "ticket_mechanic not found"}), 404
     
+    return ticket_mechanics_schema.jsonify(ticket_mechanics), 200
+
+ #  =========================================================================
+
+@ticket_mechanics_bp.route('/<int:service_ticket_id>/<int:mechanic_id>', methods=['DELETE']) 
+@limiter.limit("3 per hour") 
+def delete_ticket_mechanic(service_ticket_id, mechanic_id):
+    ticket_mechanic = db.session.get(Ticket_Mechanics, (service_ticket_id, mechanic_id))
     if not ticket_mechanic:
         return jsonify({"message": "ticket_mechanic not found"}), 404
-    try:
-        ticket_mechanic_data = ticket_mechanic_schema.load(request.json)
-    except ValidationError as e:
-        return jsonify({"Message": e.messages}), 400
-    for key, value in ticket_mechanic_data.items():
-        setattr(ticket_mechanic, key, value)
+    db.session.delete(ticket_mechanic)
     db.session.commit()
-    print(f"ticket_mechanic updated: {ticket_mechanic_id}")
-    return ticket_mechanic_schema.jsonify(ticket_mechanic), 200
+    return jsonify({"message": f"Ticket was deleted: ({service_ticket_id}, {mechanic_id})"}), 200
+ #  =========================================================================
+
+# @ticket_mechanics_bp.route('/<int:service_ticket>/<int:mechanic_id>', methods=['PUT'])
+# @limiter.limit("20 per hour", override_defaults=True)
+# def update_ticket_mechanic(service_ticket, mechanic_id):
+#     ticket_mechanic = (db.session.query(Ticket_Mechanics).filter_by(service_ticket_id=service_ticket, mechanic_id=mechanic_id).first())
+    
+#     if not ticket_mechanic:
+#         return jsonify({"message": "ticket_mechanic not found"}), 404
+#     try:
+#         ticket_mechanic_data = ticket_mechanic_schema.load(request.json)
+#     except ValidationError as e:
+#         return jsonify({"Message": e.messages}), 400
+#     for key, value in ticket_mechanic_data.items():
+#         setattr(ticket_mechanic, key, value)
+#     db.session.commit()
+#     print(f"ticket_mechanic updated: ({service_ticket}, {mechanic_id})")
+#     return ticket_mechanic_schema.jsonify(ticket_mechanic), 200
 
 # ======================================================================
 
@@ -89,7 +93,27 @@ def assign_mechanics(ticket_id):
         mechanic = db.session.get(Mechanics, mech_id)
         if mechanic and mechanic not in ticket.mechanics:
             ticket.mechanics.append(mechanic)
+    print(f"Mechanics assigned to ticket {ticket_id}: {mechanic_ids}")
+    db.session.commit()
+    return ticket_mechanic_schema.jsonify(ticket), 200
 
+#==========================================================================
+
+@ticket_mechanics_bp.route('/<int:ticket_id>/unassign_mechanics', methods=['DELETE'])
+def unassign_mechanics(ticket_id):
+    ticket = db.session.get(Service_Ticket, ticket_id)
+    if not ticket:
+        return jsonify({"message": "Ticket not found"}), 404
+
+    mechanic_ids = request.json.get("mechanic_ids", [])
+    if not mechanic_ids:
+        return jsonify({"message": "No mechanics provided"}), 400
+
+    for mech_id in mechanic_ids:
+        mechanic = db.session.get(Mechanics, mech_id)
+        if mechanic and mechanic in ticket.mechanics:
+            ticket.mechanics.remove(mechanic)
+    print(f"Mechanics unassigned from ticket {ticket_id}: {mechanic_ids}")
     db.session.commit()
     return ticket_mechanic_schema.jsonify(ticket), 200
 
@@ -99,9 +123,14 @@ def assign_mechanics(ticket_id):
 @ticket_mechanics_bp.route('/<int:mechanic_id>/get_ticket_mechanic', methods=['GET'])
 @token_required
 @cache.cached(timeout=30)
-def get_ticket_mechanics(mechanic_id):
-    ticket = db.session.get(Service_Ticket, mechanic_id)
-    if not ticket:
+def get_ticket_mechanics(mechanic_id, user_id, role):
+    tickets = (
+    db.session.query(Service_Ticket)
+    .join(Ticket_Mechanics)
+    .filter(Ticket_Mechanics.mechanic_id == mechanic_id)
+    .all()
+)
+    if not tickets:
         return jsonify({"message": "Ticket not found"}), 404
 
     tickets_list = [
@@ -121,6 +150,7 @@ def get_ticket_mechanics(mechanic_id):
                 for m in ticket.mechanics
             ]
         }
+        for ticket in tickets
     ]
     print(tickets_list) 
     
@@ -131,7 +161,7 @@ def get_ticket_mechanics(mechanic_id):
 @ticket_mechanics_bp.route('/<int:customers_id>/get_ticket_customer', methods=['GET'])
 @token_required
 @cache.cached(timeout=30)
-def get_ticket_customers(customers_id):
+def get_ticket_customers(customers_id, user_id, role):
     
     customer = db.session.get(Customers, customers_id)
     if not customer:
@@ -159,5 +189,41 @@ def get_ticket_customers(customers_id):
     ]
 
     return jsonify({"customer": customer_info,"tickets": tickets_list}), 200
+
+#=========================================================================
+@ticket_mechanics_bp.route('/get_most_tickets_mechanics', methods=['GET'])
+@limiter.limit("50 per hour", override_defaults=True)
+@cache.cached(timeout=20)   
+def get_most_ticket_mechanics():
+   
+    
+    top_mechanics = (
+        db.session.query(
+            Mechanics.id,
+            Mechanics.first_name,
+            Mechanics.last_name,
+            Mechanics.email,
+            func.count(Service_Ticket.id).label('ticket_count')
+        )
+        .join(Service_Ticket.mechanics)  
+        .group_by(Mechanics.id)
+        .order_by(func.count(Service_Ticket.id).desc())
+        .limit(3)
+        .all()
+    )
+
+    # Prepare response
+    mechanics_list = [
+        {
+            "id": m.id,
+            "first_name": m.first_name,
+            "last_name": m.last_name,
+            "email": m.email,
+            "ticket_count": m.ticket_count
+        }
+        for m in top_mechanics
+    ]
+
+    return jsonify(mechanics_list), 200
    
  
