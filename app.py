@@ -9,4 +9,3 @@ with app.app_context():
     
 app.run(debug=True)        
 
-# password for customers added but currently not used for future login feature

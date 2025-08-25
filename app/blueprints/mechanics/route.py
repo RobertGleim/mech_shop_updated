@@ -98,6 +98,7 @@ def update_mechanic(user_id, role):
     Mechainc_data['password'] = generate_password_hash(Mechainc_data['password'])
     for key, value in Mechainc_data.items():
         setattr(mechanic, key, value)
+        
     db.session.commit()
     print(f"Mechanic updated: {mechanic.first_name} {mechanic.last_name}")
     return mechanic_schema.jsonify(mechanic), 200
