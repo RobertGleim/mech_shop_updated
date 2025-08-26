@@ -6,6 +6,8 @@ from .blueprints.mechanics import mechanics_bp
 from .blueprints.service_tickets import service_tickets_bp
 from .blueprints.ticket_mechanics import ticket_mechanics_bp
 from .blueprints.inventory import inventory_bp
+from .blueprints.item_descriptions import item_descriptions_bp
+from .blueprints.invoice import invoice_bp
 
 
 
@@ -28,6 +30,8 @@ def create_app(config_name):
     app.register_blueprint(service_tickets_bp, url_prefix='/service_tickets')
     app.register_blueprint(ticket_mechanics_bp, url_prefix='/ticket_mechanics')
     app.register_blueprint(inventory_bp, url_prefix='/inventory')
+    app.register_blueprint(item_descriptions_bp, url_prefix='/item_descriptions')
+    app.register_blueprint(invoice_bp, url_prefix='/invoice')
    
     
     

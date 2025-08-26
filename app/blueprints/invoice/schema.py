@@ -8,4 +8,4 @@ class InvoiceSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         
 invoice_schema = InvoiceSchema()
-invocies_schema = InvoiceSchema(many=True)
+invoices_schema = InvoiceSchema(many=True)

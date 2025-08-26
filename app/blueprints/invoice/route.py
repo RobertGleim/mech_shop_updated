@@ -26,7 +26,7 @@ def create_invoice():
 @invoice_bp.route('/', methods=['GET'])
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
-def read_invoices():
+def get_invoices():
     invoices = db.session.query(Invoice).all()
     return invoices_schema.jsonify(invoices), 200
 
@@ -34,7 +34,7 @@ def read_invoices():
 
 @invoice_bp.route('/<int:id>', methods=['GET'])
 @limiter.limit("30 per hour", override_defaults=True)
-def read_invoice(id):
+def get_invoice(id):
    
    invoice = db.session.query(Invoice).where(Invoice.id==id).first()
    return invoice_schema.jsonify(invoice), 200
@@ -75,7 +75,7 @@ def update_invoice(id):
 
 #  =========================================================================
 
-@invoice_bp.route('/<int:invoice_id>', methods=['DELETE'])
+@invoice_bp.route('/<int:invoice_id>/delete_invoice_item', methods=['DELETE'])
 @limiter.limit("5 per hour", override_defaults=True)
 def delete_invoice_item(invoice_id):
     
@@ -89,7 +89,7 @@ def delete_invoice_item(invoice_id):
     return jsonify({"message": f"Invoice item {invoice_id} deleted"}), 200
 
 #  =========================================================================
-@invoice_bp.route('/<int:invoice_id>'/'update_invoice_item', methods=['PUT'])
+@invoice_bp.route('/<int:invoice_id>/update_invoice_item', methods=['PUT'])
 @limiter.limit("10 per hour", override_defaults=True)
 def update_invoice_item(invoice_id):
             
@@ -111,7 +111,7 @@ def update_invoice_item(invoice_id):
 
 #  =========================================================================
 
-@invoice_bp.route('/<int:invoice_id>/add_item', methods=['POST'])
+@invoice_bp.route('/<int:invoice_id>/add_invoice_item', methods=['POST'])
 @limiter.limit("20 per hour", override_defaults=True)
 def add_invoice_item(invoice_id):
     try:

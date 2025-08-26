@@ -89,20 +89,18 @@ class ItemsDescription(Base):
     quantity_in_stock: Mapped[int] = mapped_column(Integer, nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
 
-    inventory_items: Mapped[list['Inventory']] = relationship('Inventory', back_populates='inventory_description')
+    inventory_items: Mapped[list['InventoryItem']] = relationship('InventoryItem', back_populates='inventory_description')
     invoices: Mapped[list['Invoice']] = relationship('Invoice', secondary='inventory', back_populates='items_description')
-
 #  =========================================================================
-class Inventory(Base):
+class InventoryItem(Base):
     __tablename__ = 'inventory'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     inventory_id: Mapped[int] = mapped_column(Integer, ForeignKey('items_description.id'), nullable=False)
     invoice_id: Mapped[int] = mapped_column(Integer, ForeignKey('invoices.id'), nullable=False)
     
-    inventory_description: Mapped['ItemsDescription'] = relationship('ItemsDescription', back_populates='inventory')
-    
-    invoice: Mapped['Invoice'] = relationship('Invoice', back_populates='inventory')
+    inventory_description: Mapped['ItemsDescription'] = relationship('ItemsDescription', back_populates='inventory_items')
+    invoice: Mapped['Invoice'] = relationship('Invoice', back_populates='inventory_items')
 
 #  =========================================================================
 class Invoice(Base):
@@ -115,9 +113,7 @@ class Invoice(Base):
     invoice_date: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now, nullable=True)
     submitted: Mapped[bool] = mapped_column(nullable=False, default=False)
 
-    inventory_items: Mapped[list['Inventory']] = relationship('Inventory',  back_populates='invoices')
-    
+    inventory_items: Mapped[list['InventoryItem']] = relationship('InventoryItem', back_populates='invoice')
     customer: Mapped['Customers'] = relationship('Customers', back_populates='invoices')
     service_ticket: Mapped['Service_Ticket'] = relationship('Service_Ticket', back_populates='invoices')
-    inventory_items: Mapped[list['Inventory']] = relationship('Inventory', back_populates='invoice')
     items_description: Mapped[list['ItemsDescription']] = relationship('ItemsDescription', secondary='inventory', back_populates='invoices')

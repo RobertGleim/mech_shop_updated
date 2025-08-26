@@ -28,7 +28,7 @@ def create_service_ticket():
 @service_tickets_bp.route('/', methods=['GET'])
 @limiter.limit("50 per hour" )
 @cache.cached(timeout=30)
-def read_service_tickets():
+def get_service_tickets():
     service_tickets = db.session.query(Service_Ticket).all()
     return service_tickets_schema.jsonify(service_tickets), 200
 
@@ -37,7 +37,7 @@ def read_service_tickets():
 @service_tickets_bp.route('/<int:service_tickets_id>', methods=['GET'])
 @limiter.limit("50 per hour")
 @cache.cached(timeout=30)
-def read_service_ticket(service_tickets_id):
+def get_service_ticket(service_tickets_id):
     service_ticket = db.session.get(Service_Ticket, service_tickets_id) 
     print(f"Service Ticket found: {service_tickets_id}")
     return service_ticket_schema.jsonify(service_ticket), 200
@@ -82,23 +82,13 @@ def update_service_ticket(service_ticket_id):
 def popular_service_tickets():
     
     popular_tickets = (
-        db.session.query(
-            Service_Ticket.service_description,
-            func.count(Service_Ticket.id).label('usage_count')
-        )
+        db.session.query(Service_Ticket.service_description,func.count(Service_Ticket.id).label('usage_count'))
         .group_by(Service_Ticket.service_description)
-        .order_by(func.count(Service_Ticket.id).desc())
-        .limit(3)
-        .all()
-    )
+        .order_by(func.count(Service_Ticket.id).desc()).limit(3).all())
 
     ticket_data = [
-        {
-            "service_description": ticket.service_description,
-            "usage_count": ticket.usage_count
-        }
-        for ticket in popular_tickets
-    ]
+        {"service_description": ticket.service_description,"usage_count": ticket.usage_count}
+        for ticket in popular_tickets]
     
     return jsonify(ticket_data), 200
 

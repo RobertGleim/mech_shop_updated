@@ -51,7 +51,7 @@ def create_mechanic():
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
 # @token_required
-def read_mechanics():
+def get_mechanics():
     mechanics = db.session.query(Mechanics).all()
     return mechanics_schema.jsonify(mechanics), 200
 
@@ -61,7 +61,7 @@ def read_mechanics():
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
 @token_required
-def read_mechainc(user_id, role):
+def get_mechainc(user_id, role):
    
     mechanic = db.session.get(Mechanics, user_id) 
     print(f"Mechanic found: {mechanic.first_name} {mechanic.last_name}")

@@ -1,10 +1,10 @@
 from app.extenstions import ma
-from app.models import Inventory
+from app.models import InventoryItem
 
 class InventorySchema(ma.SQLAlchemyAutoSchema):
    
     class Meta:
-        model = Inventory
+        model = InventoryItem
         include_fk = True
         
 inventory_schema = InventorySchema()

@@ -48,7 +48,7 @@ def create_customer():
 @customers_bp.route('/', methods=['GET'])
 # limiter left blank to use default limits
 # @token_required
-def read_customers():
+def get_customers():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 2, type=int)
     
@@ -73,7 +73,7 @@ def read_customers():
 @customers_bp.route('/profile', methods=['GET'])
 # limiter left blank to use default limits
 @token_required
-def read_customer(user_id,role):
+def get_customer(user_id,role):
     
     customer = db.session.get(Customers, user_id) 
     print(f"Customer found: {user_id} ")
