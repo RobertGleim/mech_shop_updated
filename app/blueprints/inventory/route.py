@@ -78,18 +78,26 @@ def update_inventory_item(id):
 @limiter.limit("30 per hour", override_defaults=True)   
 def search_inventory_items():
     part_name = request.args.get('part_name')
-    part_desc = request.args.get('part_desc')
+    part_description = request.args.get('part_description')
     
     query = db.session.query(ItemsDescription)
     
     if part_name:
         query = query.filter(ItemsDescription.part_name.ilike(f'%{part_name}%'))
-    if part_desc:
-        query = query.filter(ItemsDescription.part_desc.ilike(f'%{part_desc}%'))
+    if part_description:
+        query = query.filter(ItemsDescription.part_desc.ilike(f'%{part_description}%'))
     
     results = query.all()
+    items = [
+        {
+            "id": item.id,
+            "part_name": item.part_name,
+            "part_description": item.part_description,
+            
+        } for item in results
+    ]
     
-    return jsonify(inventories_schema.dump(results)), 200
+    return jsonify(items), 200
 
 #  =========================================================================
 

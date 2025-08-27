@@ -36,7 +36,7 @@ def get_ticket_mechanics():
 
  #  =========================================================================
 
-@ticket_mechanics_bp.route('/<int:service_ticket_id>', methods=['GET'])
+@ticket_mechanics_bp.route('/<int:service_ticket_id>/get_ticket_mechanic', methods=['GET'])
 @limiter.limit("50 per hour", override_defaults=True)
 @cache.cached(timeout=20)
 def get_ticket_mechanic(service_ticket_id,):

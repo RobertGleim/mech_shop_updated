@@ -76,3 +76,6 @@ def update_item_descriptions(id):
     return item_description_schema.jsonify(inventory_item), 200
 
 #  =========================================================================
+
+def item_names(self):
+    return f"{self.part_name}"
