@@ -46,7 +46,7 @@ class Service_Ticket(Base):
     __tablename__ = 'service_tickets'
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey('customers.id'), nullable=False)
+    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey('customers.id'), nullable=True)
     service_description: Mapped[str] = mapped_column(String(500), nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     vin: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -139,7 +139,7 @@ class Invoice(Base):
     __tablename__ = 'invoices'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey('customers.id'), nullable=False)
+    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey('customers.id'), nullable=True)
     service_ticket_id: Mapped[int] = mapped_column(Integer, ForeignKey('service_tickets.id'), nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     invoice_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=True)

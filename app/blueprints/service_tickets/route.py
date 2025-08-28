@@ -52,7 +52,7 @@ def delete_service_ticket(service_tickets_id):
         return jsonify({"message": "Service Ticket not found"}), 404    
     db.session.delete(service_ticket)
     db.session.commit()
-    print(f"Service Ticket {service_tickets_id} was deleted ")
+   
     return jsonify({"message": f"Service Ticket  {service_tickets_id} was deleted "}), 200
 
  #  =========================================================================
@@ -71,7 +71,7 @@ def update_service_ticket(service_ticket_id):
     for key, value in service_ticket_data.items():
         setattr(service_ticket, key, value)
     db.session.commit()
-    print(f"Service Ticket updated: for customer {service_ticket.customer_id}")
+    
     return service_ticket_schema.jsonify(service_ticket), 200
 
 # ==========================================================================
