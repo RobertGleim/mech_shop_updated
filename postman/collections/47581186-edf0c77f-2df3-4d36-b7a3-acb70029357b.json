@@ -1133,6 +1133,48 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "search  inventory",
+					"id": "47581186-3f2ba2f4-3a5a-4380-b085-7162d5e4cc30",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n   \r\n}\r\n  ",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:5000/inventory/search?part_name=tire",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"inventory",
+								"search"
+							],
+							"query": [
+								{
+									"key": "part_name",
+									"value": "tire"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"id": "47581186-743d4e9c-8d4c-4e15-b8ef-593a83ff74c1"
@@ -1470,48 +1512,6 @@
 							"path": [
 								"inventory",
 								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "search  inventory",
-					"id": "47581186-3f2ba2f4-3a5a-4380-b085-7162d5e4cc30",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n   \r\n}\r\n  ",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "http://127.0.0.1:5000/inventory/search?part_name=tire",
-							"protocol": "http",
-							"host": [
-								"127",
-								"0",
-								"0",
-								"1"
-							],
-							"port": "5000",
-							"path": [
-								"inventory",
-								"search"
-							],
-							"query": [
-								{
-									"key": "part_name",
-									"value": "tire"
-								}
 							]
 						}
 					},
