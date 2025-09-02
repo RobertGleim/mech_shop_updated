@@ -25,7 +25,8 @@ def login_customer():
             "message": f"Login successful {customer.first_name} {customer.last_name}",
             "token": token
             }), 200
-    return jsonify({"message": "Invalid email or password"}), 403    
+    return jsonify({"message": "Invalid email or password"}), 403 
+  
  #  =========================================================================
 
 @customers_bp.route('/', methods=['POST'])
