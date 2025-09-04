@@ -95,7 +95,7 @@ def delete_customer(user_id, role):
 
  #  =========================================================================
  
-@customers_bp.route('', methods=['PUT'])
+@customers_bp.route('', methods=['PUT', 'PATCH'])
 @limiter.limit("20 per hour", override_defaults=True)
 @token_required
 def update_customer(user_id, role):

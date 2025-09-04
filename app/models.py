@@ -36,7 +36,7 @@ class Customers(Base):
     email: Mapped[str] = mapped_column(String(360), unique=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(15), nullable=True)
     address: Mapped[str] = mapped_column(String(500), nullable=True)
-    password: Mapped[str] = mapped_column(String(120), nullable=False)
+    password: Mapped[str] = mapped_column(String(500), nullable=False)
     
     
     service_tickets: Mapped[list['Service_Ticket']] = relationship('Service_Ticket', back_populates='customer')
@@ -78,7 +78,7 @@ class Mechanics(Base):
     first_name: Mapped[str] = mapped_column(String(120), nullable=False)
     last_name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(360), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String(120), nullable=False)
+    password: Mapped[str] = mapped_column(String(500), nullable=False)
     salary: Mapped[float] = mapped_column(nullable=False)
     address: Mapped[str] = mapped_column(String(500), nullable=True)
 
@@ -142,6 +142,7 @@ class Invoice(Base):
     customer_id: Mapped[int] = mapped_column(Integer, ForeignKey('customers.id'), nullable=True) #made true for testing
     service_ticket_id: Mapped[int] = mapped_column(Integer, ForeignKey('service_tickets.id'), nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
+    
     invoice_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=True)
     submitted: Mapped[bool] = mapped_column(nullable=False, default=False)
     

@@ -37,8 +37,12 @@ def create_mechanic():
     except ValidationError as e: 
         return jsonify(e.messages),400
     
-    data['password'] = generate_password_hash(data['password'])
+    
+    existing_mechanic = db.session.query(Mechanics).filter_by(email=data['email']).first()
+    if existing_mechanic:
+        return jsonify({"message": "Email already in use"}), 409
 
+    data['password'] = generate_password_hash(data['password'])
     new_mechanic = Mechanics(**data)
     db.session.add(new_mechanic)
     db.session.commit()
