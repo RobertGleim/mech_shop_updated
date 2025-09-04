@@ -1775,44 +1775,6 @@
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "update invoice item",
-					"id": "47581186-365b4c17-17cb-489d-b14f-d2992de72b2a",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "http://127.0.0.1:5000/invoice/1/update_invoice_item/1",
-							"protocol": "http",
-							"host": [
-								"127",
-								"0",
-								"0",
-								"1"
-							],
-							"port": "5000",
-							"path": [
-								"invoice",
-								"1",
-								"update_invoice_item",
-								"1"
-							]
-						}
-					},
-					"response": []
 				}
 			],
 			"id": "47581186-2200ef26-abc8-41a5-bf7a-6856de9feee5"
