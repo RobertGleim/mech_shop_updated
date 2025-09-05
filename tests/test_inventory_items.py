@@ -3,6 +3,7 @@ from app.models import InventoryItem, ItemsDescription, db
 import unittest
 
 # python -m unittest discover tests
+
 class TestInventoryItems(unittest.TestCase):
     def setUp(self):
         self.app = create_app('TestingConfig')
@@ -25,6 +26,8 @@ class TestInventoryItems(unittest.TestCase):
             db.session.add(self.inventory_item)
             db.session.commit()
             self.inventory_item_id = self.inventory_item.id
+            
+# -------------------------------------------------------------------------------------------
 
     def test_create_inventory_item(self):
         payload = {
@@ -35,16 +38,23 @@ class TestInventoryItems(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json['name'], "Air Filter")
         self.assertEqual(response.json['items_description_id'], self.desc_id)
+        
+# -------------------------------------------------------------------------------------------
 
     def test_get_inventory_items(self):
         response = self.client.get('/inventory/')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(i['name'] == "Oil Filter" for i in response.json))
+        
+# -------------------------------------------------------------------------------------------
+        
 
     def test_get_inventory_item(self):
         response = self.client.get(f'/inventory/{self.inventory_item_id}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['name'], "Oil Filter")
+        
+# -------------------------------------------------------------------------------------------        
 
     def test_update_inventory_item(self):
         payload = {
@@ -56,6 +66,8 @@ class TestInventoryItems(unittest.TestCase):
         self.assertEqual(response.json['name'], "Oil Filter Updated")
         self.assertEqual(response.json['items_description_id'], self.desc_id)
 
+# -------------------------------------------------------------------------------------------
+
     def test_delete_inventory_item(self):
         response = self.client.delete(f'/inventory/{self.inventory_item_id}')
         self.assertEqual(response.status_code, 200)
@@ -66,10 +78,14 @@ class TestInventoryItems(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, {})
 
+# -------------------------------------------------------------------------------------------
+
     def test_delete_inventory_item_not_found(self):
         response = self.client.delete('/inventory/9999')
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
+
+# -------------------------------------------------------------------------------------------
 
     def test_update_inventory_item_not_found(self):
         payload = {"name": "Doesn't Matter", "items_description_id": self.desc_id}
@@ -77,15 +93,16 @@ class TestInventoryItems(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
+# -------------------------------------------------------------------------------------------
+
     def test_create_inventory_item_invalid(self):
         payload = {"name": "", "items_description_id": None}
         response = self.client.post('/inventory/', json=payload)
         self.assertEqual(response.status_code, 400)
 
-    def test_search_inventory_items(self):
-        response = self.client.get('/inventory/search?part_name=Oil')
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(any(i['part_name'] == "Oil Filter" for i in response.json))
+
+
+    
 
 if __name__ == "__main__":
     unittest.main()

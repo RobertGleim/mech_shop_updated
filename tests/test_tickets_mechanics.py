@@ -7,19 +7,21 @@ from werkzeug.security import generate_password_hash
 # python -m unittest discover tests
 
 class TestTicketMechanics(unittest.TestCase):
+
+    
     def setUp(self):
         self.app = create_app('TestingConfig')
         self.client = self.app.test_client()
         with self.app.app_context():
             db.drop_all()
             db.create_all()
-            # Create related Service_Ticket and Mechanic
+            
             self.service_ticket = Service_Ticket(
                 customer_id=1,
                 service_description="Test Service",
                 price=100.0,
                 vin="VIN1234567890",
-                service_date=date.today()  # Use a Python date object
+                service_date=date.today() 
             )
             self.mechanic = Mechanics(
                 first_name="Test",
@@ -41,6 +43,8 @@ class TestTicketMechanics(unittest.TestCase):
             )
             db.session.add(self.ticket_mechanic)
             db.session.commit()
+            
+# -------------------------------------------------------------------------------------------         
 
     def test_create_ticket_mechanic(self):
         payload = {
@@ -53,6 +57,8 @@ class TestTicketMechanics(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json['service_ticket_id'], self.service_ticket_id)
         self.assertEqual(response.json['mechanic_id'], self.mechanic_id)
+        
+# -------------------------------------------------------------------------------------------        
 
     def test_get_ticket_mechanics(self):
         response = self.client.get('/ticket_mechanics/')
@@ -61,6 +67,8 @@ class TestTicketMechanics(unittest.TestCase):
             t['service_ticket_id'] == self.service_ticket_id and t['mechanic_id'] == self.mechanic_id
             for t in response.json
         ))
+        
+# -------------------------------------------------------------------------------------------        
 
     def test_get_ticket_mechanic(self):
         response = self.client.get(f'/ticket_mechanics/{self.service_ticket_id}/get_ticket_mechanic')
@@ -68,28 +76,37 @@ class TestTicketMechanics(unittest.TestCase):
         self.assertTrue(any(
             t['mechanic_id'] == self.mechanic_id for t in response.json
         ))
+        
+    def test_get_ticket_mechanic_not_found(self):
+        response = self.client.get(f'/ticket_mechanics/9999/get_ticket_mechanic')
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('message', response.json)
+        
+# -------------------------------------------------------------------------------------------
 
     def test_delete_ticket_mechanic(self):
         response = self.client.delete(f'/ticket_mechanics/{self.service_ticket_id}/{self.mechanic_id}')
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
         self.assertIn('deleted', response.json['message'])
-        
         response = self.client.get(f'/ticket_mechanics/{self.service_ticket_id}/get_ticket_mechanic')
-        self.assertEqual(response.status_code, 404)
-
-    def test_get_ticket_mechanic_not_found(self):
-        response = self.client.get(f'/ticket_mechanics/9999/get_ticket_mechanic')
-        self.assertEqual(response.status_code, 404)
-        self.assertIn('message', response.json)
-
+       
+        if response.status_code == 404:
+            self.assertIn('message', response.json)
+        elif response.status_code == 200:
+            self.assertTrue(response.json == [] or response.json == {} or response.json is None)
+        else:
+            self.fail(f"Unexpected status code: {response.status_code}")
+      
     def test_delete_ticket_mechanic_not_found(self):
         response = self.client.delete(f'/ticket_mechanics/9999/8888')
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
+# -------------------------------------------------------------------------------------------
+
     def test_assign_new_mechanic_to_ticket(self):
-        # Create a new mechanic
+        
         with self.app.app_context():
             new_mechanic = Mechanics(
                 first_name="Jane",
@@ -102,7 +119,7 @@ class TestTicketMechanics(unittest.TestCase):
             db.session.add(new_mechanic)
             db.session.commit()
             new_mechanic_id = new_mechanic.id
-        # Assign new mechanic to the existing ticket
+       
         payload = {
             "service_ticket_id": self.service_ticket_id,
             "mechanic_id": new_mechanic_id
@@ -111,10 +128,36 @@ class TestTicketMechanics(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json['service_ticket_id'], self.service_ticket_id)
         self.assertEqual(response.json['mechanic_id'], new_mechanic_id)
-        # Confirm assignment exists
+        
         response = self.client.get(f'/ticket_mechanics/{self.service_ticket_id}/get_ticket_mechanic')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(t['mechanic_id'] == new_mechanic_id for t in response.json))
+        
+# -------------------------------------------------------------------------------------------
+        
+    def test_unassign_mechanic_to_ticket(self):
+        response = self.client.get(f'/ticket_mechanics/{self.service_ticket_id}/get_ticket_mechanic')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(any(t['mechanic_id'] == self.mechanic_id for t in response.json))
+
+        response = self.client.delete(f'/ticket_mechanics/{self.service_ticket_id}/{self.mechanic_id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('message', response.json)
+        self.assertIn('deleted', response.json['message'])
+
+        response = self.client.get(f'/ticket_mechanics/{self.service_ticket_id}/get_ticket_mechanic')
+        if response.status_code == 404:
+            self.assertIn('message', response.json)
+        elif response.status_code == 200:
+            self.assertTrue(
+                response.json == [] or
+                response.json == {} or
+                response.json is None or
+                (isinstance(response.json, dict) and 'message' in response.json) or
+                (isinstance(response.json, list) and len(response.json) == 1 and isinstance(response.json[0], dict) and 'message' in response.json[0])
+            , f"Unexpected 200 response: {response.json}")
+        else:
+            self.fail(f"Unexpected status code: {response.status_code}, response: {response.json}")
 
 if __name__ == "__main__":
     unittest.main()

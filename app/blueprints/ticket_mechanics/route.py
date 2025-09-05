@@ -38,7 +38,6 @@ def get_ticket_mechanics():
 
 @ticket_mechanics_bp.route('/<int:service_ticket_id>/get_ticket_mechanic', methods=['GET'])
 @limiter.limit("50 per hour", override_defaults=True)
-@cache.cached(timeout=20)
 def get_ticket_mechanic(service_ticket_id,):
     ticket_mechanics = db.session.query(Ticket_Mechanics).filter_by(service_ticket_id=service_ticket_id).all()
  

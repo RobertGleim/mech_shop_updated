@@ -85,7 +85,7 @@ def search_inventory_items():
     if part_name:
         query = query.filter(ItemsDescription.part_name.ilike(f'%{part_name}%'))
     if part_description:
-        query = query.filter(ItemsDescription.part_desc.ilike(f'%{part_description}%'))
+        query = query.filter(ItemsDescription.part_description.ilike(f'%{part_description}%'))
     
     results = query.all()
     items = [

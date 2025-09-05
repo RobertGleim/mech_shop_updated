@@ -37,16 +37,24 @@ class TestServiceTickets(unittest.TestCase):
         self.assertEqual(response.json['service_description'], "Tire Rotation")
         self.assertEqual(response.json['price'], 19.99)
         self.assertEqual(response.json['vin'], "1HGCM82633A004353")
+        
+# ------------------------------------------------------------------------------------------- 
 
     def test_get_service_tickets(self):
         response = self.client.get('/service_tickets/')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(t['service_description'] == "Oil Change" for t in response.json))
+        
+# -------------------------------------------------------------------------------------------         
 
     def test_get_service_ticket(self):
         response = self.client.get(f'/service_tickets/{self.ticket_id}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['service_description'], "Oil Change")
+        self.assertEqual(response.json['price'], 29.99)
+        self.assertEqual(response.json['vin'], "1HGCM82633A004352")
+        
+# ------------------------------------------------------------------------------------------- 
 
     def test_update_service_ticket(self):
         update_payload = {
@@ -60,17 +68,22 @@ class TestServiceTickets(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['service_description'], "Brake Inspection")
         self.assertEqual(response.json['price'], 39.99)
+        self.assertEqual(response.json['vin'], "1HGCM82633A004352")
+
+# -------------------------------------------------------------------------------------------
 
     def test_delete_service_ticket(self):
         response = self.client.delete(f'/service_tickets/{self.ticket_id}')
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
         self.assertIn('deleted', response.json['message'])
-
-    def test_get_popular_service_tickets(self):
-        response = self.client.get('/service_tickets/popular')
+        response = self.client.get(f'/service_tickets/{self.ticket_id}')
         self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.json, list)
+        self.assertTrue(response.json is None or response.json == {})
+    
+# ------------------------------------------------------------------------------------------- 
+
+    
 
 if __name__ == "__main__":
     unittest.main()

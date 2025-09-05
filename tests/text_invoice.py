@@ -3,6 +3,8 @@ from app.models import Invoice, Invoice_Inventory_Link, InventoryItem, ItemsDesc
 import unittest
 from datetime import datetime
 
+# python -m unittest discover tests
+
 class TestInvoices(unittest.TestCase):
     def setUp(self):
         self.app = create_app('TestingConfig')
@@ -52,6 +54,8 @@ class TestInvoices(unittest.TestCase):
             db.session.commit()
             self.invoice_id = self.invoice.id
             self.inventory_item_id = self.inventory_item.id
+            
+# -------------------------------------------------------------------------------------------
 
     def test_create_invoice(self):
         payload = {
@@ -67,15 +71,21 @@ class TestInvoices(unittest.TestCase):
         self.assertEqual(response.json['service_ticket_id'], self.ticket.id)
         self.assertEqual(response.json['price'], 200.0)
 
+# -------------------------------------------------------------------------------------------
+
     def test_get_invoices(self):
         response = self.client.get('/invoice/')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(i['id'] == self.invoice_id for i in response.json))
 
+# -------------------------------------------------------------------------------------------
+
     def test_get_invoice(self):
         response = self.client.get(f'/invoice/{self.invoice_id}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['id'], self.invoice_id)
+
+# -------------------------------------------------------------------------------------------
 
     def test_update_invoice(self):
         payload = {"price": 150.0, "submitted": True}
@@ -84,20 +94,25 @@ class TestInvoices(unittest.TestCase):
         self.assertEqual(response.json['price'], 150.0)
         self.assertEqual(response.json['submitted'], True)
 
+# -------------------------------------------------------------------------------------------
+
     def test_delete_invoice(self):
         response = self.client.delete(f'/invoice/{self.invoice_id}')
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
         self.assertIn('deleted', response.json['message'])
-        # Confirm deletion returns not found (API returns empty dict)
         response = self.client.get(f'/invoice/{self.invoice_id}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, {})
+
+# -------------------------------------------------------------------------------------------
 
     def test_delete_invoice_not_found(self):
         response = self.client.delete('/invoice/9999')
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
+
+# -------------------------------------------------------------------------------------------
 
     def test_update_invoice_not_found(self):
         payload = {"price": 999.0}
@@ -105,10 +120,14 @@ class TestInvoices(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
+# -------------------------------------------------------------------------------------------
+
     def test_create_invoice_invalid(self):
         payload = {"customer_id": None, "service_ticket_id": None, "price": None}
         response = self.client.post('/invoice/', json=payload)
         self.assertEqual(response.status_code, 400)
+
+# -------------------------------------------------------------------------------------------
 
     def test_add_invoice_item(self):
         payload = {"inventory_item_id": self.inventory_item_id, "quantity": 2}
@@ -117,31 +136,37 @@ class TestInvoices(unittest.TestCase):
         self.assertIn('message', response.json)
         self.assertEqual(response.json['quantity'], 2)
 
+# -------------------------------------------------------------------------------------------
+
     def test_add_invoice_item_not_found(self):
         payload = {"inventory_item_id": 9999, "quantity": 1}
         response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
+# -------------------------------------------------------------------------------------------
+
     def test_delete_invoice_item(self):
-        # First add the item
+
         payload = {"inventory_item_id": self.inventory_item_id, "quantity": 1}
         self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload)
-        # Now delete
         response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/{self.inventory_item_id}')
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
+
+# -------------------------------------------------------------------------------------------
 
     def test_delete_invoice_item_not_found(self):
         response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/9999')
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
+# -------------------------------------------------------------------------------------------
+
     def test_update_invoice_item(self):
-        # Add an item
+       
         payload = {"inventory_item_id": self.inventory_item_id, "quantity": 1}
         self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload)
-        # Create a new inventory item to update to
         new_desc = ItemsDescription(
             part_name="Air Filter",
             part_description="Premium air filter",
@@ -159,6 +184,8 @@ class TestInvoices(unittest.TestCase):
         response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/{self.inventory_item_id}', json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
+
+# -------------------------------------------------------------------------------------------
 
     def test_update_invoice_item_not_found(self):
         payload = {"inventory_item_id": 9999}
