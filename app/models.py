@@ -115,14 +115,14 @@ class InventoryItem(Base):
         'Invoice_Inventory_Link',
         back_populates="inventory_item",
         cascade="all, delete-orphan",
-        foreign_keys=["invoice_inventory_link.inventory_item_id"],
+        foreign_keys=lambda: [Invoice_Inventory_Link.inventory_item_id],
         overlaps='invoices')
 
     invoices: Mapped[list['Invoice']] = relationship(
         'Invoice',
         secondary='invoice_inventory_link',
         back_populates='inventory_items',
-        foreign_keys=["invoice_inventory_link.invoice_id", "invoice_inventory_link.inventory_item_id"],
+        foreign_keys=lambda: [Invoice_Inventory_Link.invoice_id, Invoice_Inventory_Link.inventory_item_id],
         overlaps='inventory_item, invoice_inventory_links')
     
     

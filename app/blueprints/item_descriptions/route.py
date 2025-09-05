@@ -40,9 +40,10 @@ def get_item_descriptions():
 @item_descriptions_bp.route('/<int:id>', methods=['GET'])
 @limiter.limit("30 per hour", override_defaults=True)
 def get_item_description(id):
-   
-   item_description = db.session.query(ItemsDescription).where(ItemsDescription.id==id).first()
-   return item_description_schema.jsonify(item_description), 200
+    item_description = db.session.query(ItemsDescription).where(ItemsDescription.id==id).first()
+    if not item_description:
+        return jsonify({"message": "Item description not found"}), 404
+    return item_description_schema.jsonify(item_description), 200
 
 #  =========================================================================
 
