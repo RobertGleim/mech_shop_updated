@@ -48,7 +48,7 @@ class TestMechanics(unittest.TestCase):
         payload = {
             "first_name": "Duplicate",
             "last_name": "Mechanic",
-            "email": "testmech@email.com",  # Already used in setUp
+            "email": "testmech@email.com",  
             "password": "123",
             "salary": 60000.0,
             "address": "456 Mechanic Ave"
@@ -58,12 +58,26 @@ class TestMechanics(unittest.TestCase):
         self.assertIn('message', response.json)
         self.assertEqual(response.json['message'], "Email already in use")
 
+    def test_invalid_create_mechanic(self):
+        payload = {
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "email": "invalid-email",  # Invalid email format
+            "password": "123",
+            "salary": 60000.0,
+            "address": "123 Main St"
+        }
+        response = self.client.post('/mechanics/', json=payload)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('email', response.json)
+        self.assertIn('Not a valid email address.', response.json['email'][0])
+
     def test_get_mechanics(self):
         response = self.client.get('/mechanics/')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(m['email'] == "testmech@email.com" for m in response.json))
 
-    def test_login_mechanic(self):
+    def test_login_mechanic_success(self):
         creds = {
             "email": "testmech@email.com",
             "password": "123"
@@ -71,6 +85,28 @@ class TestMechanics(unittest.TestCase):
         response = self.client.post('/mechanics/login', json=creds)
         self.assertEqual(response.status_code, 200)
         self.assertIn('token', response.json)
+        self.assertIn('message', response.json)
+        self.assertTrue(response.json['message'].startswith("Login successful"))
+
+    def test_login_mechanic_invalid_password(self):
+        creds = {
+            "email": "testmech@email.com",
+            "password": "wrongpassword"
+        }
+        response = self.client.post('/mechanics/login', json=creds)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('message', response.json)
+        self.assertEqual(response.json['message'], "Invalid email or password")
+
+    def test_login_mechanic_invalid_email(self):
+        creds = {
+            "email": "notfound@email.com",
+            "password": "123"
+        }
+        response = self.client.post('/mechanics/login', json=creds)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('message', response.json)
+        self.assertEqual(response.json['message'], "Invalid email or password")
 
     def test_get_mechanic_profile(self):
         headers = {"Authorization": "Bearer " + self.token}

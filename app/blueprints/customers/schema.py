@@ -1,7 +1,9 @@
 from app.extenstions import ma
 from app.models import Customers
+from marshmallow import fields
 
 class  CustomerSchema(ma.SQLAlchemyAutoSchema):
+    email = fields.Email(required=True)  
    
     class Meta:
         model = Customers

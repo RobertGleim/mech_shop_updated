@@ -50,27 +50,26 @@ class TestCustomers(unittest.TestCase):
         self.assertTrue(check_password_hash(response.json['password'], "123"))
         
     
-    ######################### commented out after testing 
     
     
     
     
-    # def test_invalid_create_customer(self):
-    #     customer_payload = {
-    #             "first_name": "Jane",
-    #             "last_name": "Doe",
-    #             "email": "invalid-email",
-    #             "password": "123",
-    #             "phone": "1234567890",
-    #             "address": "123 Main St"
-    #         }
+    
+    def test_invalid_create_customer(self):
+        customer_payload = {
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "email": "invalid-email",
+                "password": "123",
+                "phone": "1234567890",
+                "address": "123 Main St"
+            }
             
-    #     response = self.client.post('/customers/', json=customer_payload)
-    #     self.assertEqual(response.status_code, 400)
-    #     self.assertIn('Invalid email format', response.json['error'])   
-    
-    ########################################################################
-        
+        response = self.client.post('/customers/', json=customer_payload)
+        self.assertIn('email', response.json)
+        self.assertIn('Not a valid email address.', response.json['email'][0])
+        self.assertEqual(response.status_code, 400)
+
     def test_get_customers(self):
         
         response = self.client.get('/customers/')
