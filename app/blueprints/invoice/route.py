@@ -83,7 +83,7 @@ def add_invoice_item(invoice_id):
         return jsonify({"message": "Invoice not found"}), 404
 
     data = request.json
-    quantity = data.get("quantity", 1)  # Default to 1 if not provided
+    quantity = data.get("quantity", 1)  
 
     try:
         inventory_item_id = int(data.get("inventory_item_id"))

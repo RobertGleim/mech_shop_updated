@@ -28,7 +28,7 @@ class TestSearch(unittest.TestCase):
             self.mechanic_id = self.mechanic.id
             self.token = encode_token(self.mechanic_id)
 
-            # Add Oil Filter item for inventory search test
+            
             from app.models import ItemsDescription, InventoryItem
             desc = ItemsDescription(
                 part_name="Oil Filter",
