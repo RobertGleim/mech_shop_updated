@@ -1,8 +1,8 @@
-from jose import jwt, JWTError
+from jose import jwt
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import request, jsonify
-import jose
+from jose import exceptions as jose_exceptions
 
 
 
@@ -35,14 +35,12 @@ def token_required(f):
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             print(data)
-            user_id=data["sub"]
-            role=data.get("role", "role")
-           
-        except jwt.exceptions.ExpiredSignatureError:
+            user_id = data["sub"]
+            role = data.get("role", "role")
+        except jose_exceptions.ExpiredSignatureError:
             return jsonify({"message": "Token is expired!"}), 403
-        except jose.exceptions.JWTError:
+        except jose_exceptions.JWTError:
             return jsonify({"message": "Token is invalid!"}), 403
-        
         return f(user_id=user_id, role=role, *args, **kwargs)
     return decorated
        
