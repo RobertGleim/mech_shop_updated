@@ -2,6 +2,9 @@ from app import create_app
 from app.models import Mechanics, Service_Ticket, db
 from app.util.auth import encode_token
 import unittest
+from app.models import Customers
+from werkzeug.security import generate_password_hash
+from app.util.auth import encode_token
 
 class TestSearch(unittest.TestCase):
    
@@ -66,15 +69,20 @@ class TestSearch(unittest.TestCase):
 # -------------------------------------------------------------------------------------------            
             
     def test_get_popular_service_tickets(self):
-        response = self.client.get('/service_tickets/popular')
+        from app.util.auth import create_admin_token
+        admin_token = create_admin_token(self.mechanic_id)
+        headers = {"Authorization": "Bearer " + admin_token}
+        response = self.client.get('/service_tickets/popular', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.json, list)
      
 # -------------------------------------------------------------------------------------------                
 
     def test_search_popular_mechanic(self):
-        
-        response = self.client.get('/mechanics/')
+        from app.util.auth import create_admin_token
+        admin_token = create_admin_token(self.mechanic_id)
+        headers = {"Authorization": "Bearer " + admin_token}
+        response = self.client.get('/mechanics/', headers=headers)
         self.assertEqual(response.status_code, 200)
         found = any(m.get('first_name') == 'Popular' for m in response.json)
         self.assertTrue(found)
@@ -92,9 +100,6 @@ class TestSearch(unittest.TestCase):
 # -------------------------------------------------------------------------------------------            
             
     def test_customer_search_tickets_by_token(self):
-        from app.models import Customers
-        from werkzeug.security import generate_password_hash
-        from app.util.auth import encode_token
         with self.app.app_context():
             customer = Customers(
                 first_name="Ticket",
@@ -126,19 +131,17 @@ class TestSearch(unittest.TestCase):
             db.session.commit()
             ticket_ids = [ticket1.id, ticket2.id]
         headers = {"Authorization": "Bearer " + customer_token}
-        
         response = self.client.get(f'/service_tickets/?customer_id={customer_id}', headers=headers)
-        self.assertEqual(response.status_code, 200)
-        returned_ids = [t['id'] for t in response.json]
-        for tid in ticket_ids:
-            self.assertIn(tid, returned_ids)  
+        # Customer role is forbidden for this route, should be 403
+        self.assertEqual(response.status_code, 403)
 
 # ------------------------------------------------------------------------------------------- 
 
     def test_search_inventory_items(self):
-            response = self.client.get('/inventory/search?part_name=Oil')
-            self.assertEqual(response.status_code, 200)
-            self.assertTrue(any(i['part_name'] == "Oil Filter" for i in response.json))   
+        headers = {"Authorization": "Bearer " + self.token}
+        response = self.client.get('/inventory/search?part_name=Oil', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(any(i['part_name'] == "Oil Filter" for i in response.json))   
             
 # -------------------------------------------------------------------------------------------                    
             
@@ -158,8 +161,8 @@ class TestSearch(unittest.TestCase):
             )
             db.session.add(item)
             db.session.commit()
-        
-        response = self.client.get('/inventory/search?part_description=dust')
+        headers = {"Authorization": "Bearer " + self.token}
+        response = self.client.get('/inventory/search?part_description=dust', headers=headers)
         self.assertEqual(response.status_code, 200)
         found = any(i.get('part_name') == 'Cabin Filter' for i in response.json)
         self.assertTrue(found)            

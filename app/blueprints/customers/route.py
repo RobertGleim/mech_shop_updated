@@ -5,7 +5,7 @@ from marshmallow import ValidationError
 from app.models import Customers, db
 from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.util.auth import token_required, encode_token
+from app.util.auth import role_required, token_required, encode_token
 
  #  =========================================================================
 
@@ -48,8 +48,9 @@ def create_customer():
  
 @customers_bp.route('/', methods=['GET'])
 # limiter left blank to use default limits
-# @token_required
-def get_customers():
+@token_required
+@role_required(['admin', 'mechanic'])
+def get_customers(user_id, role):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 2, type=int)
     
@@ -74,6 +75,7 @@ def get_customers():
 @customers_bp.route('/profile', methods=['GET'])
 # limiter left blank to use default limits
 @token_required
+@role_required(['admin', 'mechanic', 'customer'])
 def get_customer(user_id,role):
     
     customer = db.session.get(Customers, user_id) 
@@ -84,7 +86,8 @@ def get_customer(user_id,role):
  
 @customers_bp.route('', methods=['DELETE'])
 @limiter.limit("3 per hour") 
-@token_required 
+@token_required
+@role_required(['admin'])
 def delete_customer(user_id, role):
     
     customer = db.session.get(Customers,user_id)
@@ -98,6 +101,7 @@ def delete_customer(user_id, role):
 @customers_bp.route('', methods=['PUT', 'PATCH'])
 @limiter.limit("20 per hour", override_defaults=True)
 @token_required
+@role_required(['admin', 'mechanic', 'customer'])
 def update_customer(user_id, role):
     
     customer = db.session.get(Customers, user_id)

@@ -6,7 +6,31 @@ from jose import exceptions as jose_exceptions
 
 
 
+
 SECRET_KEY = "super secret key"
+
+
+def create_admin_token(user_id):
+    return encode_token(user_id, role='admin')
+
+def create_mechanic_token(user_id):
+    return encode_token(user_id, role='mechanic')
+
+def create_customer_token(user_id):
+    return encode_token(user_id, role='customer')
+
+
+def role_required(required_roles):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            role = kwargs.get('role')
+            print(f"[DEBUG] role_required: role={role}, required_roles={required_roles}")
+            if role not in required_roles:
+                return jsonify({'message': 'You do not have permission to access this resource.'}), 403
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
 
 def encode_token(user_id, role='mechanic'):
     payload = {

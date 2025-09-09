@@ -54,6 +54,10 @@ class TestInvoices(unittest.TestCase):
             db.session.commit()
             self.invoice_id = self.invoice.id
             self.inventory_item_id = self.inventory_item.id
+
+            # Import and create admin token
+            from app.util.auth import create_admin_token
+            self.admin_token = create_admin_token(self.customer.id)
             
 # -------------------------------------------------------------------------------------------
 
@@ -65,7 +69,8 @@ class TestInvoices(unittest.TestCase):
             "invoice_date": datetime.now().isoformat(),
             "submitted": False
         }
-        response = self.client.post('/invoice/', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.post('/invoice/', json=payload, headers=headers)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json['customer_id'], self.customer.id)
         self.assertEqual(response.json['service_ticket_id'], self.ticket.id)
@@ -74,14 +79,16 @@ class TestInvoices(unittest.TestCase):
 # -------------------------------------------------------------------------------------------
 
     def test_get_invoices(self):
-        response = self.client.get('/invoice/')
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.get('/invoice/', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(i['id'] == self.invoice_id for i in response.json))
 
 # -------------------------------------------------------------------------------------------
 
     def test_get_invoice(self):
-        response = self.client.get(f'/invoice/{self.invoice_id}')
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.get(f'/invoice/{self.invoice_id}', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['id'], self.invoice_id)
 
@@ -89,7 +96,8 @@ class TestInvoices(unittest.TestCase):
 
     def test_update_invoice(self):
         payload = {"price": 150.0, "submitted": True}
-        response = self.client.put(f'/invoice/{self.invoice_id}', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.put(f'/invoice/{self.invoice_id}', json=payload, headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['price'], 150.0)
         self.assertEqual(response.json['submitted'], True)
@@ -97,18 +105,20 @@ class TestInvoices(unittest.TestCase):
 # -------------------------------------------------------------------------------------------
 
     def test_delete_invoice(self):
-        response = self.client.delete(f'/invoice/{self.invoice_id}')
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.delete(f'/invoice/{self.invoice_id}', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
         self.assertIn('deleted', response.json['message'])
-        response = self.client.get(f'/invoice/{self.invoice_id}')
+        response = self.client.get(f'/invoice/{self.invoice_id}', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, {})
 
 # -------------------------------------------------------------------------------------------
 
     def test_delete_invoice_not_found(self):
-        response = self.client.delete('/invoice/9999')
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.delete('/invoice/9999', headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
@@ -116,7 +126,8 @@ class TestInvoices(unittest.TestCase):
 
     def test_update_invoice_not_found(self):
         payload = {"price": 999.0}
-        response = self.client.put('/invoice/9999', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.put('/invoice/9999', json=payload, headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
@@ -124,14 +135,16 @@ class TestInvoices(unittest.TestCase):
 
     def test_create_invoice_invalid(self):
         payload = {"customer_id": None, "service_ticket_id": None, "price": None}
-        response = self.client.post('/invoice/', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.post('/invoice/', json=payload, headers=headers)
         self.assertEqual(response.status_code, 400)
 
 # -------------------------------------------------------------------------------------------
 
     def test_add_invoice_item(self):
         payload = {"inventory_item_id": self.inventory_item_id, "quantity": 2}
-        response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
         self.assertEqual(response.status_code, 201)
         self.assertIn('message', response.json)
         self.assertEqual(response.json['quantity'], 2)
@@ -140,33 +153,35 @@ class TestInvoices(unittest.TestCase):
 
     def test_add_invoice_item_not_found(self):
         payload = {"inventory_item_id": 9999, "quantity": 1}
-        response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
 # -------------------------------------------------------------------------------------------
 
     def test_delete_invoice_item(self):
-
+        headers = {"Authorization": "Bearer " + self.admin_token}
         payload = {"inventory_item_id": self.inventory_item_id, "quantity": 1}
-        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload)
-        response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/{self.inventory_item_id}')
+        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+        response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/{self.inventory_item_id}', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
 
 # -------------------------------------------------------------------------------------------
 
     def test_delete_invoice_item_not_found(self):
-        response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/9999')
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/9999', headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 
 # -------------------------------------------------------------------------------------------
 
     def test_update_invoice_item(self):
-       
+        headers = {"Authorization": "Bearer " + self.admin_token}
         payload = {"inventory_item_id": self.inventory_item_id, "quantity": 1}
-        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload)
+        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
         new_desc = ItemsDescription(
             part_name="Air Filter",
             part_description="Premium air filter",
@@ -181,7 +196,7 @@ class TestInvoices(unittest.TestCase):
         db.session.add(new_item)
         db.session.commit()
         payload = {"inventory_item_id": new_item.id}
-        response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/{self.inventory_item_id}', json=payload)
+        response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/{self.inventory_item_id}', json=payload, headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
 
@@ -189,7 +204,8 @@ class TestInvoices(unittest.TestCase):
 
     def test_update_invoice_item_not_found(self):
         payload = {"inventory_item_id": 9999}
-        response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/9999', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/9999', json=payload, headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 

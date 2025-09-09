@@ -4,7 +4,7 @@ from flask import request, jsonify
 from marshmallow import ValidationError
 from app.models import Mechanics, Service_Ticket, db
 from app.extenstions import limiter,cache
-from app.util.auth import token_required 
+from app.util.auth import token_required, role_required 
 from sqlalchemy import func
 
  #  =========================================================================
@@ -25,10 +25,13 @@ def create_service_ticket():
 
  #  =========================================================================
  
+
 @service_tickets_bp.route('/', methods=['GET'])
-@limiter.limit("50 per hour" )
+@limiter.limit("50 per hour")
 @cache.cached(timeout=30)
-def get_service_tickets():
+@token_required
+@role_required(['admin', 'mechanic'])
+def get_service_tickets(user_id, role):
     service_tickets = db.session.query(Service_Ticket).all()
     return service_tickets_schema.jsonify(service_tickets), 200
 

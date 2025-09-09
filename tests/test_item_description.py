@@ -28,6 +28,11 @@ class TestItemDescriptions(unittest.TestCase):
             db.session.commit()
             self.inventory_item_id = self.inventory_item.id
 
+            # Import and create admin and mechanic tokens
+            from app.util.auth import create_admin_token, create_mechanic_token
+            self.admin_token = create_admin_token(1)
+            self.mechanic_token = create_mechanic_token(2)
+
 # -------------------------------------------------------------------------------------------
 
     def test_create_item_description(self):
@@ -36,7 +41,8 @@ class TestItemDescriptions(unittest.TestCase):
             "part_description": "Premium air filter",
             "part_price": 14.99
         }
-        response = self.client.post('/item_descriptions/', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.post('/item_descriptions/', json=payload, headers=headers)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json['part_name'], "Air Filter")
         self.assertEqual(response.json['part_description'], "Premium air filter")
@@ -45,14 +51,16 @@ class TestItemDescriptions(unittest.TestCase):
 # -------------------------------------------------------------------------------------------
 
     def test_get_item_descriptions(self):
-        response = self.client.get('/item_descriptions/')
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.get('/item_descriptions/', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(i['part_name'] == "Oil Filter" for i in response.json))
         
 # -------------------------------------------------------------------------------------------
 
     def test_get_item_description(self):
-        response = self.client.get(f'/item_descriptions/{self.item_description_id}')
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.get(f'/item_descriptions/{self.item_description_id}', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['part_name'], "Oil Filter")
         
@@ -64,7 +72,8 @@ class TestItemDescriptions(unittest.TestCase):
             "part_description": "Updated description",
             "part_price": 12.99
         }
-        response = self.client.put(f'/item_descriptions/{self.inventory_item_id}', json=payload)
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.put(f'/item_descriptions/{self.inventory_item_id}', json=payload, headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['part_name'], "Oil Filter Updated")
         self.assertEqual(response.json['part_description'], "Updated description")
@@ -73,32 +82,34 @@ class TestItemDescriptions(unittest.TestCase):
 # -------------------------------------------------------------------------------------------
 
     def test_delete_item_description(self):
-        
+        headers = {"Authorization": "Bearer " + self.admin_token}
         with self.app.app_context():
             inv = db.session.query(InventoryItem).filter_by(items_description_id=self.item_description_id).first()
             if inv:
                 db.session.delete(inv)
                 db.session.commit()
-        response = self.client.delete(f'/item_descriptions/{self.item_description_id}')
+        response = self.client.delete(f'/item_descriptions/{self.item_description_id}', headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.json)
         self.assertIn('deleted', response.json['message'])
-       
-        response = self.client.get(f'/item_descriptions/{self.item_description_id}')
+        
+        response = self.client.get(f'/item_descriptions/{self.item_description_id}', headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
         
 # -------------------------------------------------------------------------------------------
 
     def test_get_item_description_not_found(self):
-        response = self.client.get('/item_descriptions/9999')
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.get('/item_descriptions/9999', headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
         
 # -------------------------------------------------------------------------------------------
 
     def test_delete_item_description_not_found(self):
-        response = self.client.delete('/item_descriptions/9999')
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.delete('/item_descriptions/9999', headers=headers)
         self.assertEqual(response.status_code, 404)
         self.assertIn('message', response.json)
 

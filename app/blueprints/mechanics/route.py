@@ -5,7 +5,7 @@ from marshmallow import ValidationError
 from app.models import Mechanics, db
 from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.util.auth import token_required, encode_token
+from app.util.auth import role_required, token_required, encode_token
 
  #  =========================================================================
 
@@ -54,8 +54,9 @@ def create_mechanic():
 @mechanics_bp.route('/', methods=['GET'])
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
-# @token_required
-def get_mechanics():
+@token_required
+@role_required(['admin',])
+def get_mechanics(user_id, role):
     mechanics = db.session.query(Mechanics).all()
     return mechanics_schema.jsonify(mechanics), 200
 
@@ -65,9 +66,10 @@ def get_mechanics():
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
 @token_required
-def get_mechainc(user_id, role):
-   
-    mechanic = db.session.get(Mechanics, user_id) 
+@role_required(['admin', 'mechanic'])
+def get_mechanic(user_id, role):
+
+    mechanic = db.session.get(Mechanics, user_id)
     print(f"Mechanic found: {mechanic.first_name} {mechanic.last_name}")
     return mechanic_schema.jsonify(mechanic), 200
 
@@ -76,6 +78,7 @@ def get_mechainc(user_id, role):
 @mechanics_bp.route('', methods=['DELETE']) 
 @limiter.limit("3 per hour") 
 @token_required
+@role_required(['admin'])
 def delete_mechanic(user_id, role):
     
     mechanic = db.session.get(Mechanics, user_id)
@@ -89,6 +92,7 @@ def delete_mechanic(user_id, role):
 @mechanics_bp.route('/', methods=['PUT'])
 @limiter.limit("20 per hour", override_defaults=True)
 @token_required
+@role_required(['admin'])
 def update_mechanic(user_id, role):
     
     mechanic = db.session.get(Mechanics, user_id)
