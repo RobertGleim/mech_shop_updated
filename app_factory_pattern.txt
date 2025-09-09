@@ -1,0 +1,56 @@
+/project
+├── /app
+│   ├── __init__.py - create_app() lives here
+│   ├── extensions.py
+│   ├── /blueprints
+│	|		├──/customers
+│	|		|		├──__init__.py  - Initializt User Blueprint
+│	|		|		├── routes.py  - Create User Controllers/routes
+│	|		|		└── schemas.py
+|   |       |
+|   |       ├──/mechanics
+|   |       |       ├──__init__.py  - Initializt User Blueprint
+│	|		|		├── routes.py  - Create User Controllers/routes
+│	|		|		└── schemas.py
+|   |       |
+|   |       ├──/service_tickets
+|   |       |       ├──__init__.py  - Initializt User Blueprint
+│	|		|		├── routes.py  - Create User Controllers/routes
+│	|		|		└── schemas.py
+|   |       ├──/tickets_mechaincs
+|   |       |       ├──__init__.py  - Initializt User Blueprint
+│	|		|		├── routes.py  - Create User Controllers/routes
+│	|		|		└── schemas.py
+|   |       ├──/items_description
+|   |       |       ├──__init__.py  - Initializt User Blueprint
+│	|		|		├── routes.py  - Create User Controllers/routes
+│	|		|		└── schemas.py
+|   |       ├──/inventory
+|   |       |       ├──__init__.py  - Initializt User Blueprint
+│	|		|		├── routes.py  - Create User Controllers/routes
+│	|		|		└── schemas.py
+|   |       ├──/invoice
+|   |       |       ├──__init__.py  - Initializt User Blueprint
+│	|		|		├── routes.py  - Create User Controllers/routes
+│	|		|		└── schemas.py
+|   |       ├──/invoice_inventory_link
+|   |                ├──__init__.py  - Initializt User Blueprint
+│	|				├── routes.py  - Create User Controllers/routes
+│	|				└── schemas.py
+|   |
+|   ├── Static
+|   ├── util
+│   └── models.py
+|
+├── instance
+|
+├── postman
+|
+├── tests
+|
+|
+├── app.py
+├── config.py
+├── erd
+├── lucid chart
+└── requirements

@@ -1,0 +1,1589 @@
+
+swagger: '2.0'
+info:
+  version: "0.0.1"
+  title: "Mechanic shop API"
+  description: API documentation for Mechanic shop
+
+host: "127.0.0.1:5000"
+schemes:
+  - "http"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+
+securityDefinitions:
+  bearerAuth:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    
+
+
+paths:
+
+  /customers/login:
+    post:
+      tags: 
+        - "customers"
+      summary: "Login a customer and receive a token"
+      description: "Login a customer with email and password to receive an authentication token." 
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Customer login credentials"
+          required: true
+          schema:
+            $ref: "#/definitions/LoginCredentials"
+      responses:
+        200:
+          description: "Successful login"
+          schema:
+            $ref: "#/definitions/LoginResponse"
+          examples:
+            application/json:
+              {
+                "message": "Login successful customer name",
+                "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+              }
+                 
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid credentials"
+        500:
+          description: "Server error"  
+
+  /customers:
+    post:
+      tags:
+        - "customers"
+      summary: "Create a new customer"
+      description: "Register a new customer in the system."
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Customer object that needs to be added, phone and address are optional"
+          required: true
+          schema:
+            $ref: "#/definitions/CustomerInput"
+      responses:
+        201:
+          description: "Customer created successfully"
+          schema:
+            $ref: "#/definitions/CustomerResponse"
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "johndoe@email.com",
+                "phone": "1234567890",
+                "address": "123 Main St",
+                "password": "<encrypted_password>"
+              }
+        400:
+          description: "Invalid input"
+        500:
+          description: "Server error"               
+   
+    
+    get:   
+      tags:
+        - "customers"
+      summary: "Get all customers"
+      description: "Retrieve a list of all customers in the system."
+      responses:
+        200:
+          description: "A list of customers"
+          schema:
+            $ref: "#/definitions/CustomersResponse"
+          examples:
+            application/json:
+              [
+                {
+                  "id": 1,
+                  "first_name": "John",
+                  "last_name": "Doe",
+                  "email": "testing@email.com",
+                  "phone": "1234567890",
+                  "address": "123 Main St",
+                  "password": "<encrypted_password>"
+                },
+                {
+                  "id": 2,
+                  "first_name": "Jane",
+                  "last_name": "Smith",
+                  "email": "testing@email.com",
+                  "phone": "0987654321",
+                  "address": "456 Elm St",
+                  "password": "<encrypted_password>"  
+                }
+              ]
+        500:
+          description: "Server error"
+
+    put: 
+      tags:
+        - "customers"
+      summary: "Update a customer"
+      description: "Update an existing customer's information. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Customer object that needs to be updated, phone and address are optional"
+          required: true
+          schema:
+            $ref: "#/definitions/CustomerInput"
+      responses:
+        200:
+          description: "Customer updated successfully"
+          schema:
+            $ref: "#/definitions/CustomerResponse"
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "testing@email.com",
+                "phone": "1234567890",
+                "address": "123 Main St",
+                "password": "<encrypted_password>"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Customer not found"
+        500:
+          description: "Server error"
+
+    delete:
+      tags:
+        - "customers"
+      summary: "Delete a customer"
+      description: "Delete an existing customer from the system. Requires authentication."
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          description: "Customer deleted successfully"
+          examples:
+            application/json:
+              {
+                "message": "Sorry to see you go, customer name!"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Customer not found"
+        500:
+          description: "Server error" 
+
+  /mechanics/login:
+    post:
+      tags: 
+        - "mechanic"
+      summary: "Login a Mechanic and receive a token"
+      description: "Login a Mechainc with email and password to receive an authentication token." 
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Mechanic login credentials"
+          required: true
+          schema:
+            $ref: "#/definitions/LoginCredentials"
+      responses:
+        200:
+          description: "Successful login"
+          schema:
+            $ref: "#/definitions/LoginResponse"
+          examples:
+            application/json:
+              {
+                "message": "Login successful Mechanic name",
+                "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+              }
+                 
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid credentials"
+        500:
+          description: "Server error"
+
+  /mechanics:
+    post:
+      tags:
+        - "mechanic"
+      summary: "Create a new Mechaincs"
+      description: "Register a new Mechaincs in the system."
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Mechaincs object that needs to be added, phone and address are optional"
+          required: true
+          schema:
+            $ref: "#/definitions/MechaincsInput"
+      responses:
+        201:
+          description: "Mechaincs created successfully"
+          schema:
+            $ref: "#/definitions/MechaincsResponse"
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "johndoe@email.com",
+                "phone": "1234567890",
+                "address": "123 Main St",
+                "password": "<encrypted_password>",
+                "salary": "50000"
+              }
+        400:
+          description: "Invalid input"
+        500:
+          description: "Server error"               
+  
+    get:   
+      tags:
+        - "mechanic"
+      summary: "Get all mechanics"
+      description: "Retrieve a list of all mechanics in the system."
+      responses:
+        200:
+          description: "A list of mechanics"
+          schema:
+            $ref: "#/definitions/mechanicsResponse"
+          examples:
+            application/json:
+              [
+                {
+                  "id": 1,
+                  "first_name": "John",
+                  "last_name": "Doe",
+                  "email": "testing@email.com",
+                  "phone": "1234567890",
+                  "address": "123 Main St",
+                  "salary": "50000"
+                },
+                {
+                  "id": 2,
+                  "first_name": "Jane",
+                  "last_name": "Smith",
+                  "email": "testing@email.com",
+                  "phone": "0987654321",
+                  "address": "456 Elm St",
+                  "password": "<encrypted_password>",
+                  "salary": "60000"  
+                }
+              ]
+        500:
+          description: "Server error"
+
+    put: 
+      tags:
+        - "mechanic"
+      summary: "Update a mechanic"
+      description: "Update an existing mechanic's information. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Mechanics object that needs to be updated, phone and address are optional"
+          required: true
+          schema:
+            $ref: "#/definitions/MechaincsInput"
+      responses:
+        200:
+          description: "mechanic updated successfully"
+          schema:
+            $ref: "#/definitions/MechaincResponse"
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "testing@email.com",
+                "phone": "1234567890",
+                "address": "123 Main St",
+                "password": "<encrypted_password>",
+                "salary": "50000"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Mechanic not found"
+        500:
+          description: "Server error"
+
+    delete:
+      tags:
+        - "mechanic"
+      summary: "Delete a mechanic"
+      description: "Delete an existing mechanic from the system. Requires authentication."
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          description: "mechanic deleted successfully"
+          examples:
+            application/json:
+              {
+                "message": "Sorry to see you go, mechanic name!"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Mechanic not found"
+        500:
+          description: "Server error"     
+  
+  /service_ticket:
+    post:
+      tags:
+        - "service_ticket"
+      summary: "Create a new service ticket"
+      description: "Create a new service ticket for a customer. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Service ticket object that needs to be added"
+          required: true
+          schema:
+            $ref: "#/definitions/ServiceTicketInput"
+      responses:
+        201:
+          description: "Service ticket created successfully"
+          schema:
+            $ref: "#/definitions/ServiceTicketResponse"
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "customer_id": 1,
+                "price": 100.00",
+                "description": "Oil change and tire rotation",
+                "vin": "1HGCM82633A123456",
+                "service_date": "2023-10-01T12:00:00Z",
+                
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        500:
+          description: "Server error"
+
+    get:
+      tags:
+        - "service_ticket"
+      summary: "Get all service tickets"
+      description: "Retrieve a list of all service tickets in the system. Requires authentication."
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "A list of service tickets"
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/ServiceTicketResponse"
+          examples:
+            application/json:
+              [
+                {
+                  "id": 1,
+                  "customer_id": 1,
+                  "price": 100.00",
+                  "description": "Oil change and tire rotation",
+                  "vin": "1HGCM82633A123456",
+                  "service_date": "2023-10-01T12:00:00Z"
+                },
+                {
+                  "id": 2,
+                  "customer_id": 2,
+                  "price": 200.00",
+                  "description": "Brake inspection and replacement",
+                  "vin": "2HGCM82633A654321",
+                  "service_date": "2023-10-02T14:30:00Z"
+                }
+              ]
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        500:
+          description: "Server error"
+
+    put:
+      tags:
+        - "service_ticket"
+      summary: "Update a service ticket"
+      description: "Update an existing service ticket's information. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Service ticket object that needs to be updated"
+          required: true
+          schema:
+            $ref: "#/definitions/ServiceTicketInput"
+      responses:
+        200:
+          description: "Service ticket updated successfully"
+          schema:
+            $ref: "#/definitions/ServiceTicketResponse"
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "customer_id": 1,
+                "price": 150.00",
+                "description": "Updated description",
+                "vin": "1HGCM82633A123456",
+                "service_date": "2023-10-01T12:00:00Z"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Service ticket not found"
+        500:
+          description: "Server error"
+
+    delete:
+      tags:
+        - "service_ticket"
+      summary: "Delete a service ticket"
+      description: "Delete an existing service ticket from the system. Requires authentication."
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          description: "Service ticket deleted successfully"
+          examples:
+            application/json:
+              {
+                "message": "Service ticket deleted successfully!"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Service ticket not found"
+        500:
+          description: "Server error"                  
+
+  /ticket_mechanics:  
+    post:
+      tags:
+        - "ticket_mechanics"
+      summary: "Assign a mechanic to a service ticket"
+      description: "Assign a mechanic to an existing service ticket. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Object containing service_ticket_id and mechanic_id"
+          required: true
+          schema:
+            type: object
+            properties:
+              service_ticket_id:
+                type: integer
+                example: 1
+              mechanic_id:
+                type: integer
+                example: 1
+      responses:
+        200:
+          description: "Mechanic assigned to service ticket successfully"
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          examples:
+            application/json:
+              {
+                "message": "Mechanic assigned to service ticket successfully!"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Service ticket or mechanic not found"
+        500:
+          description: "Server error"
+
+    get:
+      tags:
+        - "ticket_mechanics"
+      summary: "Get all ticket-mechanic assignments"
+      description: "Retrieve a list of all ticket-mechanic assignments in the system. Requires authentication."
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "A list of ticket-mechanic assignments"
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                service_ticket_id:
+                  type: integer
+                mechanic_id:
+                  type: integer
+          examples:
+            application/json:
+              [
+                {
+                  "id": 1,
+                  "service_ticket_id": 1,
+                  "mechanic_id": 1
+                },
+                {
+                  "id": 2,
+                  "service_ticket_id": 2,
+                  "mechanic_id": 2
+                }
+              ]
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        500:
+          description: "Server error"
+    put:
+      tags:
+        - "ticket_mechanics"
+      summary: "Update a ticket-mechanic assignment"
+      description: "Update an existing ticket-mechanic assignment. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Object containing service_ticket_id and mechanic_id"
+          required: true
+          schema:
+            type: object
+            properties:
+              service_ticket_id:
+                type: integer
+                example: 1
+              mechanic_id:
+                type: integer
+                example: 1
+      responses:
+        200:
+          description: "Ticket-mechanic assignment updated successfully"
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          examples:
+            application/json:
+              {
+                "message": "Ticket-mechanic assignment updated successfully!"
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Ticket-mechanic assignment not found"
+        500:
+          description: "Server error"
+    delete:
+      tags:
+        - "ticket_mechanics"  
+      summary: "Delete a ticket-mechanic assignment"
+      description: "Delete an existing ticket-mechanic assignment from the system. Requires authentication."
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          description: "Ticket-mechanic assignment deleted successfully"
+          examples:
+            application/json:
+              {
+                "message": "Ticket-mechanic assignment deleted successfully!"
+              }
+        400:
+          description: "Invalid input"
+        401:
+
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Ticket-mechanic assignment not found"
+        500:
+          description: "Server error"
+
+  /item_descriptions:
+    post:
+      tags:
+        - "item_descriptions"
+      summary: "Create a new item description"
+      description: "Create a new item description in the system."
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Item description object that needs to be added"
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Oil Change"
+              price:
+                type: number
+                format: float
+                example: 29.99
+      responses:
+        201:
+          description: "Item description created successfully"
+          schema:
+            $ref: "#/definitions/ItemDescriptionResponse"
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "name": "Oil Change",
+                "price": 29.99
+              }
+        400:
+          description: "Invalid input"
+        500:
+          description: "Server error"  
+    get:
+      tags:
+        - "item_descriptions"
+      summary: "Get all item descriptions"
+      description: "Retrieve a list of all item descriptions in the system."
+      responses:
+        200:
+          description: "A list of item descriptions"
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                price:
+                  type: number
+                  format: float
+          examples:
+            application/json:
+              [
+                {
+                  "id": 1,
+                  "name": "Oil Change",
+                  "price": 29.99
+                },
+                {
+                  "id": 2,
+                  "name": "Tire Rotation",
+                  "price": 49.99
+                }
+              ]
+        500:
+          description: "Server error" 
+    put:
+      tags:
+        - "item_descriptions"
+      summary: "Update an item description"
+      description: "Update an existing item description's information."
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Item description object that needs to be updated"
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Oil Change"
+              price:
+                type: number
+                format: float
+                example: 29.99
+    responses:
+      200:
+        description: "Item description updated successfully"
+        schema:
+          $ref: "#/definitions/ItemDescriptionsResponse"
+        examples:
+          application/json:
+            {
+              "id": 1,
+              "name": "Oil Change",
+              "price": 29.99
+            }
+      400:
+        description: "Invalid input"
+      404:
+        description: "Item description not found"
+      500:
+        description: "Server error"
+    delete:
+      tags:
+        - "item_descriptions"
+      summary: "Delete an item description"
+      description: "Delete an existing item description from the system."
+      parameters:
+        - in: "path"
+          name: "id"
+          type: integer
+          required: true
+          description: "ID of the item description to delete"
+      responses:
+        200:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          description: "Item description deleted successfully"
+          examples:
+            application/json:
+              {
+                "message": "Item description deleted successfully!"
+              }
+        400:
+          description: "Invalid input"
+        404:
+          description: "Item description not found"
+        500:
+          description: "Server error"          
+
+  /inventory:
+    post:
+      tags:
+        - "inventory_items"
+      summary: "Create a new inventory item"
+      description: "Create a new inventory item in the system."
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Inventory item object that needs to be added"
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Oil Filter"
+              quantity:
+                type: integer
+                example: 50
+              price:
+                type: number
+                format: float
+                example: 15.99
+      responses:
+        201:
+          description: "Inventory item created successfully"
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              quantity:
+                type: integer
+              price:
+                type: number
+                format: float
+          examples:
+            application/json:
+              {
+                "id": 1,
+                "name": "Oil Filter",
+                "quantity": 50,
+                "price": 15.99
+              }
+        400:
+          description: "Invalid input"
+        500:
+          description: "Server error"
+    get:
+      tags:
+        - "inventory_items"
+      summary: "Get all inventory items"
+      description: "Retrieve a list of all inventory items in the system."
+      responses:
+        200:
+          description: "A list of inventory items"
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                quantity:
+                  type: integer
+                price:
+                  type: number
+                  format: float
+          examples:
+            application/json:
+              [
+                {
+                  "id": 1,
+                  "name": "Oil Filter",
+                  "quantity": 50,
+                  "price": 15.99
+                },
+                {
+                  "id": 2,
+                  "name": "Brake Pads",
+                  "quantity": 30,
+                  "price": 45.99
+                }
+              ]
+        500:
+          description: "Server error" 
+    put:
+      tags:
+        - "inventory_items"
+      summary: "Update an inventory item"
+      description: "Update an existing inventory item's information."
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Inventory item object that needs to be updated"
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Oil Filter"
+              quantity:
+                type: integer
+                example: 50
+              price:
+                type: number
+                format: float
+                example: 15.99
+          responses:
+          200:
+            description: "Inventory item updated successfully"
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                quantity:
+                  type: integer
+                price:
+                  type: number
+                  format: float
+            examples:
+              application/json:
+                {
+                  "id": 1,
+                  "name": "Oil Filter",
+                  "quantity": 50,
+                  "price": 15.99
+                }
+    delete:
+        tags:
+          - "inventory_items"
+        summary: "Delete an inventory item"
+        description: "Delete an existing inventory item from the system."
+        parameters:
+          - in: "path"
+            name: "id"
+            type: integer
+            required: true
+            description: "ID of the inventory item to delete"
+        responses:
+        200:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          description: "Inventory item deleted successfully"
+          examples:
+            application/json:
+              {
+                "message": "Inventory item deleted successfully!"
+              }
+    get/search:
+        tags:
+          - "inventory_items"
+        summary: "Search inventory items by name"
+        description: "Search for inventory items by their name."
+        parameters:
+          - in: "query"
+            name: "name"
+            type: string
+            required: true
+            description: "Name of the inventory item to search for"
+        responses:
+          200:
+            description: "A list of matching inventory items"
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  quantity:
+                    type: integer
+                  price:
+                    type: number
+                    format: float
+            examples:
+              application/json:
+                [
+                  {
+                    "id": 1,
+                    "name": "Oil Filter",
+                    "quantity": 50,
+                    "price": 15.99
+                  }
+                ]
+          400:
+            description: "Invalid input"
+          500:
+            description: "Server error" 
+
+  /invoice:
+    post:
+      tags:
+        - "invoice"
+      summary: "Generate an invoice for a service ticket"
+      description: "Generate an invoice for a specific service ticket, including labor and parts costs. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "path"
+          name: "service_ticket_id"
+          type: integer
+          required: true
+          description: "ID of the service ticket to generate an invoice for"
+      responses:
+        200:
+          description: "Invoice generated successfully"
+          schema:
+            type: object
+            properties:
+              service_ticket_id:
+                type: integer
+              customer_name:
+                type: string
+              total_amount:
+                type: number
+                format: float
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    description:
+                      type: string
+                    amount:
+                      type: number
+                      format: float
+          examples:
+            application/json:
+              {
+                "service_ticket_id": 1,
+                "customer_name": "John Doe",
+                "total_amount": 150.00,
+                "details": [
+                  {
+                    "description": "Labor",
+                    "amount": 100.00
+                  },
+                  {
+                    "description": "Parts",
+                    "amount": 50.00
+                  }
+                ]
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Service ticket not found"
+        500:
+          description: "Server error"
+    get:
+      tags:
+        - "invoice" 
+      summary: "Get all invoices"
+      description: "Retrieve a list of all invoices in the system. Requires authentication."
+      security:
+        - bearerAuth: []  
+      responses:
+        200:  
+          description: "A list of invoices"
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                service_ticket_id:
+                  type: integer
+                customer_name:
+                  type: string
+                total_amount:
+                  type: number
+                  format: float
+                details:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                      amount:
+                        type: number
+                        format: float
+          examples:
+            application/json:
+              [
+                {
+                  "service_ticket_id": 1,
+                  "customer_name": "John Doe",
+                  "total_amount": 150.00,
+                  "details": [
+                    {
+                      "description": "Labor",
+                      "amount": 100.00
+                    },
+                    {
+                      "description": "Parts",
+                      "amount": 50.00
+                    }
+                  ]
+                },
+                {
+                  "service_ticket_id": 2,
+                  "customer_name": "Jane Smith",
+                  "total_amount": 200.00,
+                  "details": [
+                    {
+                      "description": "Labor",
+                      "amount": 150.00
+                    },
+                    {
+                      "description": "Parts",
+                      "amount": 50.00
+                    }
+                  ]
+                }
+              ]
+    put:
+      tags:
+        - "invoice"
+      summary: "Update an invoice"
+      description: "Update an existing invoice's information. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "body"
+          name: "Body"
+          description: "Invoice object that needs to be updated"
+          required: true
+          schema:
+            type: object
+            properties:
+              service_ticket_id:
+                type: integer
+              customer_name:
+                type: string
+              total_amount:
+                type: number
+                format: float
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    description:
+                      type: string
+                    amount:
+                      type: number
+                      format: float
+      responses:
+        200:
+          description: "Invoice updated successfully"
+          schema:
+            type: object
+            properties:
+              service_ticket_id:
+                type: integer
+              customer_name:
+                type: string
+              total_amount:
+                type: number
+                format: float
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    description:
+                      type: string
+                    amount:
+                      type: number
+                      format: float
+          examples:
+            application/json:
+              {
+                "service_ticket_id": 1,
+                "customer_name": "John Doe",
+                "total_amount": 175.00,
+                "details": [
+                  {
+                    "description": "Labor",
+                    "amount": 125.00
+                  },
+                  {
+                    "description": "Parts",
+                    "amount": 50.00
+                  }
+                ]
+              }
+        400:
+          description: "Invalid input"
+        401:
+          description: "Unauthorized - Invalid or missing token"
+        404:
+          description: "Invoice not found"
+        500:
+          description: "Server error"
+    delete:
+      tags:
+        - "invoice"
+      summary: "Delete an invoice"
+      description: "Delete an existing invoice from the system. Requires authentication."
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: "path"
+          name: "service_ticket_id"
+          type: integer
+          required: true
+          description: "ID of the service ticket whose invoice is to be deleted"                      
+
+                                 
+
+        
+
+
+definitions:
+
+  LoginCredentials:
+    type: object
+    properties:
+      email:
+        type: string
+        examples:
+          - "testing@e,ail.com"
+      password:
+        type: string
+        examples:
+          - "testing123"
+    required:
+      - email
+      - password
+
+  LoginResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      token:
+        type: string  
+      
+  CustomerInput:     
+    type: object
+    properties:
+      first_name:
+        type: string
+        examples:
+          - "John"
+      last_name:
+        type: string
+        examples:
+          - "Doe"  
+      email:
+        type: string
+        examples:
+          - "testing@email.com"
+      phone:
+        type: string
+        examples:
+          - "1234567890"
+      address:
+        type: string
+        examples:
+          - "123 Main St"    
+      password:
+        type: string
+        examples:
+          - "testing123"
+    required:
+      - email
+      - password
+      - first_name
+      - last_name
+
+  CustomerResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      first_name:
+        type: string
+      last_name:
+        type: string  
+      email:
+        type: string
+      phone:
+        type: string
+      address:
+        type: string    
+      password:
+        type: string
+
+  CustomersResponse:
+    type: array
+    items:
+      type: object
+    properties:
+      id:
+        type: integer
+      first_name:
+        type: string
+      last_name:
+        type: string  
+      email:
+        type: string
+      phone:
+        type: string
+      address:
+        type: string    
+      password:
+        type: string
+
+         
+
+  MechaincsInput:
+    type: object
+    properties:
+      first_name:
+        type: string
+        examples:
+          - "John"
+      last_name:
+        type: string
+        examples:
+          - "Doe"  
+      email:
+        type: string
+        examples:
+          - "test@email.com"
+      phone:
+        type: string
+        examples:
+          - "1234567890"
+      address:
+        type: string
+        examples:
+          - "123 Main St"
+      password:
+        type: string
+        examples:
+          - "testing123"
+      salary:
+        type: string
+        examples:
+          - "50000"
+
+  MechanicResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      first_name:
+        type: string
+      last_name:
+        type: string  
+      email:
+        type: string
+      phone:
+        type: string
+      address:
+        type: string    
+      password:
+        type: string
+      salary:
+        type: string
+
+  MechanicsResponse:
+    type: array
+    items:
+        type: object
+    properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string  
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string    
+        password:
+          type: string
+        salary:
+          type: string  
+
+  serviceTicketInput:
+    type: object
+    properties:
+      customer_id:
+        type: integer
+        examples:
+          - 1
+      price:
+        type: number
+        format: float
+        examples:
+          - 100.00
+      description:
+        type: string
+        examples:
+          - "Oil change and tire rotation"
+      vin:
+        type: string
+        examples:
+          - "1HGCM82633A123456"
+      service_date:
+        type: string
+        format: date-time
+        examples:
+          - "2023-10-01T12:00:00Z"
+    required:
+      - customer_id
+      - price
+      - description
+      - vin
+      - service_date
+
+  ServiceTicketResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      customer_id:
+        type: integer
+      price:
+        type: number
+        format: float
+      description:
+        type: string
+      vin:
+        type: string
+      service_date:
+        type: string
+        format: date-time  
+
+  ServiceTicketsResponse:
+    type: array
+    items:
+        type: object
+    properties:
+      id:
+        type: integer
+      customer_id:
+        type: integer
+      price:
+        type: number
+        format: float
+      description:
+        type: string
+      vin:
+        type: string
+      service_date:
+        type: string
+        format: date-time
+
+  TicketMechanicInput:
+    type: object
+    properties:
+      service_ticket_id:
+        type: integer
+        examples:
+          - 1
+      mechanic_id:
+        type: integer
+        examples:
+          - 1
+    required:
+      - service_ticket_id
+      - mechanic_id
+
+  TicketMechanicResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      service_ticket_id:
+        type: integer
+      mechanic_id:
+        type: integer            
+
+  TicketMechanicsResponse:
+    type: array
+    items:
+        type: object
+    properties:
+        id:
+          type: integer
+        service_ticket_id:
+          type: integer
+        mechanic_id:
+          type: integer   
+
+  ItemDescriptionResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+        format: float
+      part_description:
+        type: string  
+  
+  ItemDescriptionsResponse:
+    type: array
+    items:
+      type: object
+    properties:   
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+        format: float
+      part_description:
+        type: string  
+  
+  InventoryItemResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      quantity:
+        type: integer
+      price:
+        type: number
+        format: float
+  
+
+
+  InvoiceResponse:
+    type: object
+    properties:
+      service_ticket_id:
+        type: integer
+      customer_name:
+        type: string
+      total_amount:
+        type: number
+        format: float
+     
+
+  InvoicesResponse: 
+    type: array
+    items:
+      type: object
+    properties:
+        service_ticket_id:
+          type: integer
+        customer_name:
+          type: string
+        total_amount:
+          type: number
+          format: float
+       
+                
+
+
