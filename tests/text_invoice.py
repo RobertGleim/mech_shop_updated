@@ -56,8 +56,131 @@ class TestInvoices(unittest.TestCase):
             self.inventory_item_id = self.inventory_item.id
 
             # Import and create admin token
-            from app.util.auth import create_admin_token
+            from app.util.auth import create_admin_token, create_mechanic_token, create_customer_token
             self.admin_token = create_admin_token(self.customer.id)
+            self.mechanic_token = create_mechanic_token(self.customer.id)
+            self.customer_token = create_customer_token(self.customer.id)
+    def test_create_invoice_role_access(self):
+        payload = {
+            "customer_id": self.customer.id,
+            "service_ticket_id": self.ticket.id,
+            "price": 200.0,
+            "invoice_date": datetime.now().isoformat(),
+            "submitted": False
+        }
+        
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.post('/invoice/', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 201)
+       
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.post('/invoice/', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 403)
+       
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.post('/invoice/', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 403)
+    def test_get_invoices_role_access(self):
+       
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.get('/invoice/', headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.get('/invoice/', headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.get('/invoice/', headers=headers)
+        self.assertEqual(response.status_code, 403)
+    def test_get_invoice_role_access(self):
+       
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.get(f'/invoice/{self.invoice_id}', headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.get(f'/invoice/{self.invoice_id}', headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.get(f'/invoice/{self.invoice_id}', headers=headers)
+        self.assertEqual(response.status_code, 403)
+    def test_update_invoice_role_access(self):
+        payload = {"price": 150.0, "submitted": True}
+        
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.put(f'/invoice/{self.invoice_id}', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.put(f'/invoice/{self.invoice_id}', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 403)
+       
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.put(f'/invoice/{self.invoice_id}', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 403)
+    def test_delete_invoice_role_access(self):
+       
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.delete(f'/invoice/{self.invoice_id}', headers=headers)
+        self.assertIn(response.status_code, [200, 404])
+       
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.delete(f'/invoice/{self.invoice_id}', headers=headers)
+        self.assertEqual(response.status_code, 403)
+       
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.delete(f'/invoice/{self.invoice_id}', headers=headers)
+        self.assertEqual(response.status_code, 403)
+    def test_add_invoice_item_role_access(self):
+        payload = {"inventory_item_id": self.inventory_item_id, "quantity": 2}
+        
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 201)
+        
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 201)
+       
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 403)
+    def test_delete_invoice_item_role_access(self):
+        payload = {"inventory_item_id": self.inventory_item_id, "quantity": 1}
+       
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+       
+        response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/{self.inventory_item_id}', headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+        response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/{self.inventory_item_id}', headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.delete(f'/invoice/{self.invoice_id}/delete_invoice_item/{self.inventory_item_id}', headers=headers)
+        self.assertEqual(response.status_code, 403)
+    def test_update_invoice_item_role_access(self):
+        payload = {"inventory_item_id": self.inventory_item_id, "quantity": 1}
+       
+        headers = {"Authorization": "Bearer " + self.admin_token}
+        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+       
+        response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/{self.inventory_item_id}', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 200)
+       
+        headers = {"Authorization": "Bearer " + self.mechanic_token}
+        self.client.post(f'/invoice/{self.invoice_id}/add_invoice_item', json=payload, headers=headers)
+        response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/{self.inventory_item_id}', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 200)
+        
+        headers = {"Authorization": "Bearer " + self.customer_token}
+        response = self.client.put(f'/invoice/{self.invoice_id}/update_invoice_item/{self.inventory_item_id}', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 403)
             
 # -------------------------------------------------------------------------------------------
 

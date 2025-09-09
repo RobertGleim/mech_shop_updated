@@ -1,3 +1,4 @@
+from app.util.auth import role_required, token_required
 from . import invoice_bp
 from .schema import invoice_schema, invoices_schema
 from flask import request, jsonify
@@ -10,7 +11,9 @@ from app.extenstions import limiter, cache
 
 @invoice_bp.route('/', methods=['POST'])
 @limiter.limit("20 per hour", override_defaults=True)
-def create_invoice():
+@token_required
+@role_required(['admin'])
+def create_invoice(user_id, role):
     try:
         data = invoice_schema.load(request.json)
     except ValidationError as e: 
@@ -26,7 +29,9 @@ def create_invoice():
 @invoice_bp.route('/', methods=['GET'])
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
-def get_invoices():
+@token_required
+@role_required(['admin', 'mechanic'])
+def get_invoices(user_id, role):
     invoices = db.session.query(Invoice).all()
     return invoices_schema.jsonify(invoices), 200
 
@@ -34,8 +39,9 @@ def get_invoices():
 
 @invoice_bp.route('/<int:id>', methods=['GET'])
 @limiter.limit("30 per hour", override_defaults=True)
-def get_invoice(id):
-   
+@token_required
+@role_required(['admin', 'mechanic'])
+def get_invoice(user_id, role, id):
    invoice = db.session.query(Invoice).where(Invoice.id==id).first()
    return invoice_schema.jsonify(invoice), 200
 
@@ -43,7 +49,9 @@ def get_invoice(id):
 
 @invoice_bp.route('/<int:id>', methods=['DELETE'])
 @limiter.limit("5 per hour", override_defaults=True)
-def delete_invoice(id):
+@token_required
+@role_required(['admin'])
+def delete_invoice(user_id, role,id):
     invoice = db.session.query(Invoice).where(Invoice.id==id).first()
     if not invoice:
         return jsonify({"message": "Invoice not found"}), 404
@@ -56,7 +64,9 @@ def delete_invoice(id):
 
 @invoice_bp.route('/<int:id>', methods=['PUT'])
 @limiter.limit("10 per hour", override_defaults=True)
-def update_invoice(id):
+@token_required
+@role_required(['admin'])
+def update_invoice(user_id, role, id):
     invoice = db.session.query(Invoice).where(Invoice.id==id).first()
     if not invoice:
         return jsonify({"message": "Invoice not found"}), 404
@@ -77,7 +87,9 @@ def update_invoice(id):
  
 @invoice_bp.route('/<int:invoice_id>/add_invoice_item', methods=['POST'])
 @limiter.limit("20 per hour", override_defaults=True)
-def add_invoice_item(invoice_id):
+@token_required
+@role_required(['admin', 'mechanic'])
+def add_invoice_item(user_id, role, invoice_id):
     invoice = db.session.query(Invoice).get(invoice_id)
     if not invoice:
         return jsonify({"message": "Invoice not found"}), 404
@@ -126,7 +138,9 @@ def add_invoice_item(invoice_id):
 
 @invoice_bp.route('/<int:invoice_id>/delete_invoice_item/<int:inventory_item_id>', methods=['DELETE'])
 @limiter.limit("5 per hour", override_defaults=True)
-def delete_invoice_item(invoice_id, inventory_item_id):
+@token_required
+@role_required(['admin', 'mechanic'])
+def delete_invoice_item(user_id, role, invoice_id, inventory_item_id):
     link = db.session.query(Invoice_Inventory_Link).filter_by(
         invoice_id=invoice_id, inventory_item_id=inventory_item_id
     ).first()
@@ -140,7 +154,9 @@ def delete_invoice_item(invoice_id, inventory_item_id):
 #  =========================================================================
 @invoice_bp.route('/<int:invoice_id>/update_invoice_item/<int:inventory_item_id>', methods=['PUT'])
 @limiter.limit("10 per hour", override_defaults=True)
-def update_invoice_item(invoice_id, inventory_item_id):
+@token_required
+@role_required(['admin', 'mechanic'])
+def update_invoice_item(user_id, role, invoice_id, inventory_item_id):
     link = db.session.query(Invoice_Inventory_Link).filter_by(
         invoice_id=invoice_id, inventory_item_id=inventory_item_id
     ).first()
