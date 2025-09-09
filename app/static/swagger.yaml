@@ -5,9 +5,9 @@ info:
   title: "Mechanic shop API"
   description: API documentation for Mechanic shop
 
-host: "127.0.0.1:5000"
+host: "mech-shop-api.onrender.com"
 schemes:
-  - "http"
+  - "https"
 consumes:
   - "application/json"
 produces:
