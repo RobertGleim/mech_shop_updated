@@ -40,7 +40,9 @@ def get_service_tickets(user_id, role):
 @service_tickets_bp.route('/<int:service_tickets_id>', methods=['GET'])
 @limiter.limit("50 per hour")
 @cache.cached(timeout=30)
-def get_service_ticket(service_tickets_id):
+@token_required
+@role_required(['admin', 'mechanic'])
+def get_service_ticket(user_id, role, service_tickets_id):
     service_ticket = db.session.get(Service_Ticket, service_tickets_id) 
     print(f"Service Ticket found: {service_tickets_id}")
     return service_ticket_schema.jsonify(service_ticket), 200
@@ -48,8 +50,10 @@ def get_service_ticket(service_tickets_id):
  #  =========================================================================
 
 @service_tickets_bp.route('/<int:service_tickets_id>', methods=['DELETE'])
-@limiter.limit("3 per hour")  
-def delete_service_ticket(service_tickets_id):
+@limiter.limit("3 per hour")
+@token_required
+@role_required(['admin', 'mechanic'])
+def delete_service_ticket(user_id, role, service_tickets_id):
     service_ticket = db.session.get(Service_Ticket, service_tickets_id)
     if not service_ticket:
         return jsonify({"message": "Service Ticket not found"}), 404    
@@ -62,7 +66,9 @@ def delete_service_ticket(service_tickets_id):
 
 @service_tickets_bp.route('/<int:service_ticket_id>', methods=['PUT'])
 @limiter.limit("20 per hour", override_defaults=True)
-def update_service_ticket(service_ticket_id):
+@token_required
+@role_required(['admin', 'mechanic'])
+def update_service_ticket(user_id, role, service_ticket_id):
     service_ticket = db.session.get(Service_Ticket, service_ticket_id)
     
     if not service_ticket:
@@ -81,8 +87,10 @@ def update_service_ticket(service_ticket_id):
 
 @service_tickets_bp.route('/popular', methods=['GET'])
 @limiter.limit("10 per hour")
-@cache.cached(timeout=30)   
-def popular_service_tickets():
+@cache.cached(timeout=30)  
+@token_required
+@role_required(['admin'])
+def popular_service_tickets(user_id, role):
     
     popular_tickets = (
         db.session.query(Service_Ticket.service_description,func.count(Service_Ticket.id).label('usage_count'))
@@ -95,36 +103,3 @@ def popular_service_tickets():
     
     return jsonify(ticket_data), 200
 
-# ==========================================================================
-
-# @service_tickets_bp.route('/<int:mechanic_id>/mechanics', methods=['GET'])
-# def get_ticket_mechanics(mechanic_id):
-#     ticket = db.session.get(Service_Ticket, mechanic_id)
-#     if not ticket:
-#         return jsonify({"message": "Ticket not found"}), 404
-
-#     mechanics_list = [
-#         {"id": m.id, "first_name": m.first_name, "last_name": m.last_name, "email": m.email}
-#         for m in ticket.mechanics
-#     ]
-#     return jsonify(mechanics_list), 200
-
-# # ==========================================================================
-
-# @service_tickets_bp.route('/<int:ticket_id>/assign_mechanics', methods=['POST'])
-# def assign_mechanics(ticket_id):
-#     ticket = db.session.get(Service_Ticket, ticket_id)
-#     if not ticket:
-#         return jsonify({"message": "Ticket not found"}), 404
-
-#     mechanic_ids = request.json.get("mechanic_ids", [])
-#     if not mechanic_ids:
-#         return jsonify({"message": "No mechanics provided"}), 400
-
-#     for mech_id in mechanic_ids:
-#         mechanic = db.session.get(Mechanics, mech_id)
-#         if mechanic and mechanic not in ticket.mechanics:
-#             ticket.mechanics.append(mechanic)
-
-#     db.session.commit()
-#     return service_ticket_schema.jsonify(ticket), 200
