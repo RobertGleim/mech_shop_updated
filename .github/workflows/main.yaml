@@ -38,28 +38,28 @@ jobs:
           echo "Contents of site-package: $(ls -l venv/lib/python*/site-packages)"
 
 
-test:
-  needs: build 
+  test:
+    needs: build 
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.13
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.13
 
-    - name: Create Virtual Environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
+      - name: Create Virtual Environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
 
-    - name: Install dependencies
-      run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
 
-    - name: Run tests
-      run: python -m unittest discover -s tests -p "test_*.py"        
-      
+      - name: Run tests
+        run: python -m unittest discover -s tests -p "test_*.py"        
+        
