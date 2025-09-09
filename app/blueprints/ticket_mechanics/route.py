@@ -1,6 +1,6 @@
 from select import select
 from app.blueprints import customers
-from app.util.auth import token_required
+from app.util.auth import role_required, token_required
 from . import ticket_mechanics_bp
 from .schema import ticket_mechanic_schema, ticket_mechanics_schema
 from flask import request, jsonify
@@ -13,11 +13,13 @@ from sqlalchemy import func
  
 @ticket_mechanics_bp.route('/', methods=['POST'])
 @limiter.limit("20 per hour", override_defaults=True)
-def create_ticket_mechanic():
+@token_required
+@role_required(['admin'])
+def create_ticket_mechanic(user_id, role):
     try:
         data = ticket_mechanic_schema.load(request.json)
-    except ValidationError as e: 
-        return jsonify(e.messages),400
+    except ValidationError as e:
+        return jsonify(e.messages), 400
 
     new_ticket_mechanic = Ticket_Mechanics(**data)
     db.session.add(new_ticket_mechanic)
@@ -30,7 +32,9 @@ def create_ticket_mechanic():
 @ticket_mechanics_bp.route('/', methods=['GET'])
 @limiter.limit("50 per hour", override_defaults=True)
 @cache.cached(timeout=20)
-def get_ticket_mechanics():
+@token_required
+@role_required(['admin'])
+def get_ticket_mechanics(user_id, role):
     ticket_mechanics = db.session.query(Ticket_Mechanics).all()
     return ticket_mechanics_schema.jsonify(ticket_mechanics), 200
 
@@ -38,7 +42,9 @@ def get_ticket_mechanics():
 
 @ticket_mechanics_bp.route('/<int:service_ticket_id>/get_ticket_mechanic', methods=['GET'])
 @limiter.limit("50 per hour", override_defaults=True)
-def get_ticket_mechanic(service_ticket_id,):
+@token_required
+@role_required(['admin'])
+def get_ticket_mechanic(service_ticket_id, role, user_id):
     ticket_mechanics = db.session.query(Ticket_Mechanics).filter_by(service_ticket_id=service_ticket_id).all()
  
     if not ticket_mechanics:
@@ -50,7 +56,9 @@ def get_ticket_mechanic(service_ticket_id,):
 
 @ticket_mechanics_bp.route('/<int:service_ticket_id>/<int:mechanic_id>', methods=['DELETE']) 
 @limiter.limit("3 per hour") 
-def delete_ticket_mechanic(service_ticket_id, mechanic_id):
+@token_required
+@role_required(['admin'])
+def delete_ticket_mechanic(user_id, role, service_ticket_id, mechanic_id):
     ticket_mechanic = db.session.get(Ticket_Mechanics, (service_ticket_id, mechanic_id))
     if not ticket_mechanic:
         return jsonify({"message": "ticket_mechanic not found"}), 404
@@ -61,7 +69,9 @@ def delete_ticket_mechanic(service_ticket_id, mechanic_id):
 
 @ticket_mechanics_bp.route('/<int:service_ticket>/<int:mechanic_id>', methods=['PUT'])
 @limiter.limit("20 per hour", override_defaults=True)
-def update_ticket_mechanic(service_ticket, mechanic_id):
+@token_required
+@role_required(['admin'])
+def update_ticket_mechanic(user_id, role, service_ticket, mechanic_id):
     ticket_mechanic = (db.session.query(Ticket_Mechanics).filter_by(service_ticket_id=service_ticket, mechanic_id=mechanic_id).first())
     
     if not ticket_mechanic:
@@ -81,7 +91,9 @@ def update_ticket_mechanic(service_ticket, mechanic_id):
 # ======================================================================
 
 @ticket_mechanics_bp.route('/<int:ticket_id>/assign_mechanics', methods=['POST'])
-def assign_mechanics(ticket_id):
+@token_required
+@role_required(['admin'])
+def assign_mechanics(user_id, role,ticket_id):
     ticket = db.session.get(Service_Ticket, ticket_id)
     if not ticket:
         return jsonify({"message": "Ticket not found"}), 404
@@ -100,7 +112,9 @@ def assign_mechanics(ticket_id):
 #==========================================================================
 
 @ticket_mechanics_bp.route('/<int:ticket_id>/unassign_mechanics', methods=['DELETE'])
-def unassign_mechanics(ticket_id):
+@token_required
+@role_required(['admin'])
+def unassign_mechanics(user_id, role, ticket_id):
     ticket = db.session.get(Service_Ticket, ticket_id)
     if not ticket:
         return jsonify({"message": "Ticket not found"}), 404
@@ -122,6 +136,7 @@ def unassign_mechanics(ticket_id):
 
 @ticket_mechanics_bp.route('/<int:mechanic_id>/get_mechanic', methods=['GET'])
 @token_required
+@role_required(['admin'])
 @cache.cached(timeout=30)
 def get_mechanics(mechanic_id, user_id, role):
     tickets = (
@@ -157,6 +172,7 @@ def get_mechanics(mechanic_id, user_id, role):
 
 @ticket_mechanics_bp.route('/get_ticket_customer', methods=['GET'])
 @token_required
+@role_required(['admin'])
 @cache.cached(timeout=30)
 def get_ticket_customers(user_id, role):
     
@@ -190,10 +206,13 @@ def get_ticket_customers(user_id, role):
 #=========================================================================
 @ticket_mechanics_bp.route('/get_most_ticket_mechanic', methods=['GET'])
 @limiter.limit("50 per hour", override_defaults=True)
-@cache.cached(timeout=20)   
-def get_most_ticket_mechanics():
-   
-    
+@cache.cached(timeout=20) 
+@token_required
+@role_required(['admin'])  
+def get_most_ticket_mechanics(user_id, role):
+    if role != 'admin':
+        return jsonify({"message": "Unauthorized"}), 403
+
     top_mechanics = (
         db.session.query(
             Mechanics.id,
