@@ -64,31 +64,31 @@ jobs:
         run: python -m unittest discover -s tests -p "test_*.py"
 
 
-deploy:
-  needs: test
-  runs-on: ubuntu-latest
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.13
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.13
 
-    - name: Create Virtual Environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
+      - name: Create Virtual Environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
 
-    - name: Install dependencies
-      run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
 
-    - name: Deploy to Production
-      uses: johnbeynon/render-deploy-action@v0.0.8
-      with:
-        service_id: ${{ secrets.SERVICE_ID }}
-        api_key: ${{ secrets.RENDER_API_KEY }}
+      - name: Deploy to Production
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service_id: ${{ secrets.SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
