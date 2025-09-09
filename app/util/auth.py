@@ -3,11 +3,9 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import request, jsonify
 from jose import exceptions as jose_exceptions
+import os
 
-
-
-
-SECRET_KEY = "super secret key"
+SECRET_KEY = os.environ.get("SECRET_KEY", ) or "super secret key"
 
 
 def create_admin_token(user_id):
