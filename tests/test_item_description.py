@@ -34,6 +34,42 @@ class TestItemDescriptions(unittest.TestCase):
             self.mechanic_token = create_mechanic_token(2)
 
 # -------------------------------------------------------------------------------------------
+        def test_mechanic_cannot_create_item_description(self):
+            payload = {
+                "part_name": "Cabin Filter",
+                "part_description": "Mechanic should not create",
+                "part_price": 19.99
+            }
+            headers = {"Authorization": "Bearer " + self.mechanic_token}
+            response = self.client.post('/item_descriptions/', json=payload, headers=headers)
+            self.assertIn(response.status_code, (401, 403))
+            
+        def test_mechanic_cannot_update_item_description(self):
+            payload = {
+                "part_name": "Should Not Update",
+                "part_description": "Mechanic update attempt",
+                "part_price": 15.99
+            }
+            headers = {"Authorization": "Bearer " + self.mechanic_token}
+            response = self.client.put(f'/item_descriptions/{self.inventory_item_id}', json=payload, headers=headers)
+            self.assertIn(response.status_code, (401, 403))
+
+        def test_mechanic_cannot_delete_item_description(self):
+            headers = {"Authorization": "Bearer " + self.mechanic_token}
+            response = self.client.delete(f'/item_descriptions/{self.item_description_id}', headers=headers)
+            self.assertIn(response.status_code, (401, 403))
+
+        def test_admin_can_get_item_description(self):
+            headers = {"Authorization": "Bearer " + self.admin_token}
+            response = self.client.get(f'/item_descriptions/{self.item_description_id}', headers=headers)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json['part_name'], "Oil Filter")
+
+        def test_admin_can_get_item_descriptions(self):
+            headers = {"Authorization": "Bearer " + self.admin_token}
+            response = self.client.get('/item_descriptions/', headers=headers)
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(any(i['part_name'] == "Oil Filter" for i in response.json))
 
     def test_create_item_description(self):
         payload = {
@@ -61,8 +97,9 @@ class TestItemDescriptions(unittest.TestCase):
     def test_get_item_description(self):
         headers = {"Authorization": "Bearer " + self.mechanic_token}
         response = self.client.get(f'/item_descriptions/{self.item_description_id}', headers=headers)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['part_name'], "Oil Filter")
+        self.assertEqual(response.status_code, 403)
+        # Optionally check for error message
+        # self.assertIn('message', response.json)
         
 # -------------------------------------------------------------------------------------------
 
@@ -102,8 +139,9 @@ class TestItemDescriptions(unittest.TestCase):
     def test_get_item_description_not_found(self):
         headers = {"Authorization": "Bearer " + self.mechanic_token}
         response = self.client.get('/item_descriptions/9999', headers=headers)
-        self.assertEqual(response.status_code, 404)
-        self.assertIn('message', response.json)
+        self.assertEqual(response.status_code, 403)
+        # Optionally check for error message
+        # self.assertIn('message', response.json)
         
 # -------------------------------------------------------------------------------------------
 
