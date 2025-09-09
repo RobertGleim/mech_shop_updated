@@ -26,7 +26,7 @@ class TestMechanics(unittest.TestCase):
             )
             db.session.add(self.mechanic)
             db.session.commit()
-            # Create a real customer
+            
             from app.models import Customers
             self.customer = Customers(
                 first_name="Test",
@@ -86,7 +86,7 @@ class TestMechanics(unittest.TestCase):
         payload = {
             "first_name": "Jane",
             "last_name": "Doe",
-            "email": "invalid-email",  # Invalid email format
+            "email": "invalid-email",  
             "password": "123",
             "salary": 60000.0,
             "address": "123 Main St"

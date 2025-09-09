@@ -120,11 +120,6 @@ class TestCustomers(unittest.TestCase):
         response = self.client.put('/customers', json=update_payload, headers=headers)
         self.assertEqual(response.status_code, 200)
        
-     
-            
-# -------------------------------------------------------------------------------------------
-
-    
 
 # -------------------------------------------------------------------------------------------
         

@@ -25,7 +25,7 @@ def role_required(required_roles):
         @wraps(f)
         def wrapper(*args, **kwargs):
             role = kwargs.get('role')
-            print(f"[DEBUG] role_required: role={role}, required_roles={required_roles}")
+            # print(f"[DEBUG] role_required: role={role}, required_roles={required_roles}") ## used to figure out problems with role base access
             if role not in required_roles:
                 return jsonify({'message': 'You do not have permission to access this resource.'}), 403
             return f(*args, **kwargs)
