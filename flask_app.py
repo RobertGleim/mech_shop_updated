@@ -55,3 +55,11 @@ with app.app_context():
         db.session.rollback()
 
 #  comment for git push test
+
+{
+  "message": "Login successful Robert Gleim",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTk4NTkwNDYsImlhdCI6MTc1OTg1NTQ0Niwic3ViIjoiNSIsInJvbGUiOiJtZWNoYW5pYyJ9.3Nd5D6evskBCl86wabLZ0o6rMMQxWwFz1yhtkanUVyA"
+}
+
+
+

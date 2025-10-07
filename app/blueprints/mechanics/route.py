@@ -51,7 +51,7 @@ def create_mechanic():
 
  #  =========================================================================
 
-@mechanics_bp.route('/', methods=['GET'])
+@mechanics_bp.route('/mechanics', methods=['GET'])
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
 @token_required

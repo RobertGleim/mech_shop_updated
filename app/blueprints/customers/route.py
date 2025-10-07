@@ -46,7 +46,7 @@ def create_customer():
 
  #  =========================================================================
  
-@customers_bp.route('/', methods=['GET'])
+@customers_bp.route('/customers', methods=['GET'])
 # limiter left blank to use default limits
 @token_required
 @role_required(['admin', 'mechanic'])
