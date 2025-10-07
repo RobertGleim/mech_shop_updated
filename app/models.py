@@ -1,4 +1,3 @@
-
 import datetime
 
 from flask_sqlalchemy import SQLAlchemy
@@ -81,6 +80,7 @@ class Mechanics(Base):
     password: Mapped[str] = mapped_column(String(500), nullable=False)
     salary: Mapped[float] = mapped_column(nullable=False)
     address: Mapped[str] = mapped_column(String(500), nullable=True)
+    is_admin: Mapped[bool] = mapped_column(nullable=False, default=False)
 
     service_tickets: Mapped[list['Service_Ticket']] = relationship(
         'Service_Ticket',
@@ -162,4 +162,3 @@ class Invoice(Base):
 
     inventory_items: Mapped[list["InventoryItem"]] = relationship("InventoryItem",secondary="invoice_inventory_link",back_populates="invoices",foreign_keys="[Invoice_Inventory_Link.invoice_id, Invoice_Inventory_Link.inventory_item_id]", overlaps="invoice, invoice_inventory_links, inventory_item")
 
-    
