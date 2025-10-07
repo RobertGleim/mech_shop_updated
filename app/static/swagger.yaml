@@ -228,20 +228,20 @@ paths:
     post:
       tags:
         - "mechanic"
-      summary: "Create a new Mechaincs"
-      description: "Register a new Mechaincs in the system."
+      summary: "Create a new Mechanics"
+      description: "Register a new Mechanics in the system."
       parameters:
         - in: "body"
           name: "Body"
-          description: "Mechaincs object that needs to be added, phone and address are optional"
+          description: "Mechanics object that needs to be added, phone and address are optional"
           required: true
           schema:
-            $ref: "#/definitions/MechaincsInput"
+            $ref: "#/definitions/MechanicsInput"
       responses:
         201:
-          description: "Mechaincs created successfully"
+          description: "Mechanics created successfully"
           schema:
-            $ref: "#/definitions/MechaincsResponse"
+            $ref: "#/definitions/MechanicsResponse"
           examples:
             application/json:
               {
@@ -249,7 +249,6 @@ paths:
                 "first_name": "John",
                 "last_name": "Doe",
                 "email": "johndoe@email.com",
-                
                 "address": "123 Main St",
                 "password": "<encrypted_password>",
                 "salary": "50000"
@@ -1334,7 +1333,7 @@ definitions:
 
          
 
-  MechaincsInput:
+  MechanicsInput:
     type: object
     properties:
       first_name:
