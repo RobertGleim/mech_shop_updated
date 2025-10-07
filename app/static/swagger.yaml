@@ -94,6 +94,8 @@ paths:
         - "customers"
       summary: "Get all customers"
       description: "Retrieve a list of all customers in the system."
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: "A list of customers"
@@ -263,6 +265,8 @@ paths:
         - "mechanic"
       summary: "Get all mechanics"
       description: "Retrieve a list of all mechanics in the system."
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: "A list of mechanics"
