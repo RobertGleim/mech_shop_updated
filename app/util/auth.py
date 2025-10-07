@@ -46,13 +46,23 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        if "Authorization" in request.headers:
-            auth_header = request.headers["Authorization"]
-            if auth_header.startswith("Bearer "):
-                token = auth_header.split(" ")[1]
+        
+        # Debug authentication headers
+        print(f"Headers: {request.headers}")
+        
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            print(f"Auth header: {auth_header}")
             
+            # Make sure it properly extracts the token part after "Bearer "
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+                print(f"Token extracted: {token[:10]}...")
+            else:
+                print("Missing Bearer prefix")
+                
         if not token:
-            return jsonify({"message": "Token is missing!"}), 401 
+            return jsonify({'message': 'Token is missing!'}), 401 
         
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -65,4 +75,4 @@ def token_required(f):
             return jsonify({"message": "Token is invalid!"}), 403
         return f(user_id=user_id, role=role, *args, **kwargs)
     return decorated
-       
+
