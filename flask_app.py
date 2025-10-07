@@ -8,7 +8,11 @@ with app.app_context():
     db.create_all()   
     
     # Check if default admin mechanic exists
-    default_mechanic = Mechanics.query.filter_by(email='Robertgleim@email.com').first()
+    
+    default_mechanic = db.session.execute(
+        db.select(Mechanics).filter_by(email='Robertgleim@email.com')
+    ).scalar_one_or_none()
+    
     if not default_mechanic:
         # Create default admin mechanic
         admin_mechanic = Mechanics(
