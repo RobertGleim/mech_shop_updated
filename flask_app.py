@@ -56,10 +56,10 @@ with app.app_context():
 
 #  comment for git push test
 
-{
-  "message": "Login successful Robert Gleim",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTk4NTkwNDYsImlhdCI6MTc1OTg1NTQ0Niwic3ViIjoiNSIsInJvbGUiOiJtZWNoYW5pYyJ9.3Nd5D6evskBCl86wabLZ0o6rMMQxWwFz1yhtkanUVyA"
-}
+# {
+#   "message": "Login successful Robert Gleim",
+#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTk4NTkwNDYsImlhdCI6MTc1OTg1NTQ0Niwic3ViIjoiNSIsInJvbGUiOiJtZWNoYW5pYyJ9.3Nd5D6evskBCl86wabLZ0o6rMMQxWwFz1yhtkanUVyA"
+# }
 
 
 
