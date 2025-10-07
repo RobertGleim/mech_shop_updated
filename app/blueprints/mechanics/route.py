@@ -55,7 +55,7 @@ def create_mechanic():
 # limiter left blank to use default limits
 @cache.cached(timeout=30)
 @token_required
-@role_required(['admin',])
+@role_required(['admin', 'mechanic'])
 def get_mechanics(user_id, role):
     mechanics = db.session.query(Mechanics).all()
     return mechanics_schema.jsonify(mechanics), 200
