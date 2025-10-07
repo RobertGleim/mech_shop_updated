@@ -1350,10 +1350,7 @@ definitions:
         type: string
         examples:
           - "test@email.com"
-      phone:
-        type: string
-        examples:
-          - "1234567890"
+      
       address:
         type: string
         examples:
@@ -1378,8 +1375,7 @@ definitions:
         type: string  
       email:
         type: string
-      phone:
-        type: string
+      
       address:
         type: string    
       password:
@@ -1400,8 +1396,7 @@ definitions:
           type: string  
         email:
           type: string
-        phone:
-          type: string
+        
         address:
           type: string    
         password:
