@@ -24,7 +24,8 @@ def create_app(config_name):
     
     app = Flask(__name__)
     app.config.from_object(f'config.{config_name}')
-    CORS(app)
+    # Allow requests from your frontend
+    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
     
     
     db.init_app(app)
