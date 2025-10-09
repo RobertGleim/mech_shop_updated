@@ -9,6 +9,7 @@ from .blueprints.inventory import inventory_bp
 from .blueprints.item_descriptions import item_descriptions_bp
 from .blueprints.invoice import invoice_bp
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_cors import CORS
 
 SWAGGER_URL = '/api/docs'
 API_URL = '/static/swagger.yaml'
@@ -23,6 +24,7 @@ def create_app(config_name):
     
     app = Flask(__name__)
     app.config.from_object(f'config.{config_name}')
+    CORS(app)
     
     
     db.init_app(app)
