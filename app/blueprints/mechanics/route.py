@@ -10,7 +10,7 @@ from app.util.auth import role_required, token_required, encode_token
  #  =========================================================================
 
 @mechanics_bp.route("/login", methods=["POST"])
-@limiter.limit("10 per hour")
+# @limiter.limit("10 per hour")
 def login_mechanics():
     try:
         data = login_schema.load(request.json)
@@ -30,7 +30,7 @@ def login_mechanics():
  #  =========================================================================
 
 @mechanics_bp.route('/', methods=['POST'])
-@limiter.limit("20 per hour", override_defaults=True)
+# @limiter.limit("20 per hour", override_defaults=True)
 def create_mechanic():
     try:
         data = mechanic_schema.load(request.json)
@@ -76,7 +76,7 @@ def get_mechanic(user_id, role):
  #  =========================================================================
 
 @mechanics_bp.route('', methods=['DELETE']) 
-@limiter.limit("3 per hour") 
+# @limiter.limit("3 per hour") 
 @token_required
 @role_required(['admin'])
 def delete_mechanic(user_id, role):
@@ -90,7 +90,7 @@ def delete_mechanic(user_id, role):
  #  =========================================================================
 
 @mechanics_bp.route('/', methods=['PUT'])
-@limiter.limit("20 per hour", override_defaults=True)
+# @limiter.limit("20 per hour", override_defaults=True)
 @token_required
 @role_required(['admin'])
 def update_mechanic(user_id, role):

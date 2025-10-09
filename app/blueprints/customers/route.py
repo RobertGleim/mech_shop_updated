@@ -10,7 +10,7 @@ from app.util.auth import role_required, token_required, encode_token
  #  =========================================================================
 
 @customers_bp.route("/login", methods=["POST"])
-@limiter.limit("10 per hour")
+# @limiter.limit("10 per hour")
 def login_customer():
     try:
         data = login_schema.load(request.json)
@@ -85,7 +85,7 @@ def get_customer(user_id,role):
  #  =========================================================================
  
 @customers_bp.route('', methods=['DELETE'])
-@limiter.limit("3 per hour") 
+# @limiter.limit("3 per hour") 
 @token_required
 @role_required(['admin'])
 def delete_customer(user_id, role):
@@ -99,7 +99,7 @@ def delete_customer(user_id, role):
  #  =========================================================================
  
 @customers_bp.route('', methods=['PUT', 'PATCH'])
-@limiter.limit("20 per hour", override_defaults=True)
+# @limiter.limit("20 per hour", override_defaults=True)
 @token_required
 @role_required(['admin', 'mechanic', 'customer'])
 def update_customer(user_id, role):
