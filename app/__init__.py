@@ -25,7 +25,10 @@ def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(f'config.{config_name}')
     # Allow requests from your frontend
-    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+    CORS(app, origins=[
+        "http://localhost:5173",
+        "https://mech-shop-api.onrender.com"
+    ], supports_credentials=True)
     
     
     db.init_app(app)
