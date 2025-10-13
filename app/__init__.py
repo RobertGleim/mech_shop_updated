@@ -1,6 +1,6 @@
-from flask import Flask, app 
+from flask import Flask
 from .models import db
-from .extenstions import ma, limiter, cache 
+from .extenstions import ma, limiter, cache
 from .blueprints.customers import customers_bp
 from .blueprints.mechanics import mechanics_bp
 from .blueprints.service_tickets import service_tickets_bp
@@ -15,33 +15,33 @@ SWAGGER_URL = '/api/docs'
 API_URL = '/static/swagger.yaml'
 
 
-swagger_blueprint = get_swaggerui_blueprint(SWAGGER_URL, API_URL, config={'app_name': "Mechanic Shop API"})
-
-cors_origins = app.config.get('CORS_ORIGINS', ["http://localhost:5173"])
-cors_supports_credentials = app.config.get('CORS_SUPPORTS_CREDENTIALS', True)
-cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
-
-
 def create_app(config_name='DevelopmentConfig'):
-    # create app instance
+    """Application factory
+
+    Creates the Flask app, loads configuration, initializes extensions and
+    registers blueprints. CORS is configured inside the factory so app.config
+    is available (avoids import-time access to app.config).
+    """
     app = Flask(__name__, instance_relative_config=False)
 
-    # load configuration from config module (adjust to your project's import style)
+    # Load configuration from config module
     app.config.from_object(f'config.{config_name}')
 
-    # Initialize extensions that require app (db, migrate, etc.)
-    # e.g. db.init_app(app)
-    # ... your existing extension init calls ...
+    # Initialize extensions that require the app
+    db.init_app(app)
+    ma.init_app(app)
+    limiter.init_app(app)
+    cache.init_app(app)
 
-    # === CORS configuration (moved inside create_app so app.config is available) ===
-    # Read CORS settings from the config (config.py)
+    # Configure Swagger UI blueprint
+    swagger_blueprint = get_swaggerui_blueprint(SWAGGER_URL, API_URL, config={'app_name': "Mechanic Shop API"})
+
+    # === CORS configuration ===
     cors_origins = app.config.get('CORS_ORIGINS', ["http://localhost:5173"])
     cors_supports_credentials = app.config.get('CORS_SUPPORTS_CREDENTIALS', True)
     cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
 
-    # Initialize Flask-CORS for all routes. This handles preflight (OPTIONS) responses.
     CORS(
         app,
         resources={r"/*": {"origins": cors_origins}},
@@ -49,14 +49,9 @@ def create_app(config_name='DevelopmentConfig'):
         methods=cors_methods,
         allow_headers=cors_headers
     )
-    
-    
-    db.init_app(app)
-    ma.init_app(app)
-    limiter.init_app(app)
-    cache.init_app(app)
-    
-    
+    # ==========================
+
+    # Register blueprints
     app.register_blueprint(customers_bp, url_prefix='/customers')
     app.register_blueprint(mechanics_bp, url_prefix='/mechanics')
     app.register_blueprint(service_tickets_bp, url_prefix='/service_tickets')
@@ -65,9 +60,8 @@ def create_app(config_name='DevelopmentConfig'):
     app.register_blueprint(item_descriptions_bp, url_prefix='/item_descriptions')
     app.register_blueprint(invoice_bp, url_prefix='/invoice')
     app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
-   
-    
-    
+
     return app
+
 
 
