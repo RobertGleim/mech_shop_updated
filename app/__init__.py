@@ -1,4 +1,5 @@
 from flask import Flask
+import os
 from .models import db
 from .extenstions import ma, limiter, cache
 from .blueprints.customers import customers_bp
@@ -38,9 +39,19 @@ def create_app(config_name='DevelopmentConfig'):
 
     # === CORS configuration ===
     cors_origins = app.config.get('CORS_ORIGINS', ["http://localhost:5173"])
+    # Ensure list type
+    if isinstance(cors_origins, str):
+        cors_origins = [cors_origins]
     cors_supports_credentials = app.config.get('CORS_SUPPORTS_CREDENTIALS', True)
     cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
+
+    # Optionally allow localhost dev origins in non-dev environments when explicitly enabled
+    allow_local = os.environ.get('ALLOW_LOCALHOST_CORS', os.environ.get('ALLOW_DEV_CORS', ''))
+    if str(allow_local).lower() in ('1', 'true', 'yes'):
+        for dev_origin in ("http://localhost:5173", "http://127.0.0.1:5173"):
+            if dev_origin not in cors_origins:
+                cors_origins.append(dev_origin)
 
     CORS(
         app,
