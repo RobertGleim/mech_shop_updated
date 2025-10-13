@@ -6,6 +6,7 @@ from app.models import Customers, db
 from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.util.auth import role_required, token_required, encode_token
+from sqlalchemy import or_
 
  #  =========================================================================
 
@@ -52,11 +53,23 @@ def create_customer():
 @role_required(['admin', 'mechanic'])
 def get_customers(user_id, role):
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 2, type=int)
-    
-    paginated_customers = db.session.query(Customers).paginate(page=page, per_page=per_page,)
+    per_page = request.args.get('per_page', 20, type=int)
+    q = request.args.get('q', None, type=str)
+
+    query = db.session.query(Customers)
+    if q:
+        like_term = f"%{q}%"
+        query = query.filter(
+            or_(
+                Customers.first_name.ilike(like_term),
+                Customers.last_name.ilike(like_term),
+                Customers.email.ilike(like_term)
+            )
+        )
+
+    paginated_customers = query.paginate(page=page, per_page=per_page)
     result = customers_schema.dump(paginated_customers.items)
-    
+
     response = {
         "customers": result,
         "total": paginated_customers.total,
@@ -66,8 +79,7 @@ def get_customers(user_id, role):
         "has_next": paginated_customers.has_next,
         "has_prev": paginated_customers.has_prev
     }
-    
-     
+
     return jsonify(response), 200
 
  #  =========================================================================
@@ -87,14 +99,23 @@ def get_customer(user_id,role):
 @customers_bp.route('', methods=['DELETE'])
 # @limiter.limit("3 per hour") 
 @token_required
-@role_required(['admin'])
+@role_required(['admin', 'mechanic', 'customer'])
 def delete_customer(user_id, role):
-    
-    customer = db.session.get(Customers,user_id)
-    db.session.delete(customer)
-    db.session.commit()
-    print(f"Customer deleted: {customer.first_name} {customer.last_name}")
-    return jsonify({"message": f"Sorry to see you go! {user_id}"}), 200
+    # Prevent admin users from deleting themselves via this endpoint
+    if role == 'admin':
+        return jsonify({"message": "Admin users are not allowed to delete their own account here."}), 403
+
+    customer = db.session.get(Customers, user_id)
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
+    try:
+        db.session.delete(customer)
+        db.session.commit()
+        print(f"Customer deleted: {customer.first_name} {customer.last_name}")
+        return ('', 204)
+    except Exception:
+        db.session.rollback()
+        return jsonify({"message": "Failed to delete customer"}), 500
 
  #  =========================================================================
  
@@ -118,3 +139,45 @@ def update_customer(user_id, role):
     db.session.commit()
     print(f"Customer updated: {customer.first_name} {customer.last_name}")
     return customer_schema.jsonify(customer), 200
+
+
+@customers_bp.route('/<int:customer_id>', methods=['DELETE'])
+@token_required
+@role_required(['admin'])
+def delete_customer_by_id(user_id, role, customer_id):
+    customer = db.session.get(Customers, customer_id)
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
+    try:
+        db.session.delete(customer)
+        db.session.commit()
+        print(f"Customer deleted by admin: {customer.first_name} {customer.last_name}")
+        return jsonify({"message": f"Customer {customer_id} deleted"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Failed to delete customer"}), 500
+
+
+@customers_bp.route('/<int:customer_id>', methods=['PUT', 'PATCH'])
+@token_required
+@role_required(['admin'])
+def update_customer_by_id(user_id, role, customer_id):
+    customer = db.session.get(Customers, customer_id)
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
+    try:
+        # allow partial updates
+        data = customer_schema.load(request.json, partial=True)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    if 'password' in data:
+        data['password'] = generate_password_hash(data['password'])
+    try:
+        for key, value in data.items():
+            setattr(customer, key, value)
+        db.session.commit()
+        print(f"Customer updated by admin: {customer.first_name} {customer.last_name}")
+        return customer_schema.jsonify(customer), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Failed to update customer"}), 500

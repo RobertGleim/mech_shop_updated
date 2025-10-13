@@ -1,4 +1,4 @@
-from flask import Flask 
+from flask import Flask, app 
 from .models import db
 from .extenstions import ma, limiter, cache 
 from .blueprints.customers import customers_bp
@@ -17,7 +17,10 @@ API_URL = '/static/swagger.yaml'
 
 swagger_blueprint = get_swaggerui_blueprint(SWAGGER_URL, API_URL, config={'app_name': "Mechanic Shop API"})
 
-
+cors_origins = app.config.get('CORS_ORIGINS', ["http://localhost:5173"])
+cors_supports_credentials = app.config.get('CORS_SUPPORTS_CREDENTIALS', True)
+cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
 
 
 def create_app(config_name):
@@ -25,10 +28,13 @@ def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(f'config.{config_name}')
     # Allow requests from your frontend
-    CORS(app, origins=[
-        "http://localhost:5173",
-        "https://mech-shop-api.onrender.com"
-    ], supports_credentials=True)
+    CORS(
+        app,
+        resources={r"/*": {"origins": cors_origins}},
+        supports_credentials=cors_supports_credentials,
+        methods=cors_methods,
+        allow_headers=cors_headers
+)
     
     
     db.init_app(app)

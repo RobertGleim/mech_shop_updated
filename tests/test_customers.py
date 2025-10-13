@@ -148,6 +148,61 @@ class TestCustomers(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+    # Additional admin endpoint tests
+    class TestAdminCustomerActions(unittest.TestCase):
+        def setUp(self):
+            self.app = create_app('TestingConfig')
+            self.client = self.app.test_client()
+            with self.app.app_context():
+                db.drop_all()
+                db.create_all()
+                # create an admin user
+                admin = Customers(
+                    first_name="Admin",
+                    last_name="User",
+                    email="admin@email.com",
+                    password=generate_password_hash('adminpass'),
+                    phone="1111111111",
+                    address="1 Admin St"
+                )
+                db.session.add(admin)
+                db.session.commit()
+                self.admin_token = create_admin_token(admin.id)
+
+                # create another customer to act on
+                other = Customers(
+                    first_name="Target",
+                    last_name="User",
+                    email="target@email.com",
+                    password=generate_password_hash('target'),
+                    phone="2222222222",
+                    address="2 Target St"
+                )
+                db.session.add(other)
+                db.session.commit()
+                self.other_id = other.id
+
+        def test_admin_update_customer_by_id(self):
+            headers = {"Authorization": "Bearer " + self.admin_token}
+            payload = {"first_name": "Updated", "phone": "9999999999"}
+            response = self.client.put(f"/customers/{self.other_id}", json=payload, headers=headers)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json['first_name'], 'Updated')
+            self.assertEqual(response.json['phone'], '9999999999')
+
+        def test_admin_delete_customer_by_id(self):
+            headers = {"Authorization": "Bearer " + self.admin_token}
+            # delete target
+            response = self.client.delete(f"/customers/{self.other_id}", headers=headers)
+            self.assertIn(response.status_code, (200,204))
+
+        def test_admin_cannot_delete_self(self):
+            headers = {"Authorization": "Bearer " + self.admin_token}
+            # extract admin id from token payload using helper not available here; we created admin with id in DB
+            # we'll attempt to delete id 1 which is admin in this setup
+            response = self.client.delete(f"/customers/1", headers=headers)
+            self.assertEqual(response.status_code, 403)
+
 
     
  
