@@ -23,18 +23,32 @@ cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "D
 cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
 
 
-def create_app(config_name):
-    
-    app = Flask(__name__)
+def create_app(config_name='DevelopmentConfig'):
+    # create app instance
+    app = Flask(__name__, instance_relative_config=False)
+
+    # load configuration from config module (adjust to your project's import style)
     app.config.from_object(f'config.{config_name}')
-    # Allow requests from your frontend
+
+    # Initialize extensions that require app (db, migrate, etc.)
+    # e.g. db.init_app(app)
+    # ... your existing extension init calls ...
+
+    # === CORS configuration (moved inside create_app so app.config is available) ===
+    # Read CORS settings from the config (config.py)
+    cors_origins = app.config.get('CORS_ORIGINS', ["http://localhost:5173"])
+    cors_supports_credentials = app.config.get('CORS_SUPPORTS_CREDENTIALS', True)
+    cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
+
+    # Initialize Flask-CORS for all routes. This handles preflight (OPTIONS) responses.
     CORS(
         app,
         resources={r"/*": {"origins": cors_origins}},
         supports_credentials=cors_supports_credentials,
         methods=cors_methods,
         allow_headers=cors_headers
-)
+    )
     
     
     db.init_app(app)
