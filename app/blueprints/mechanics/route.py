@@ -1,30 +1,43 @@
 from . import mechanics_bp
 from .schema import mechanic_schema, mechanics_schema, login_schema
-from flask import request, jsonify
+from flask import request, jsonify, current_app
+import traceback
 from marshmallow import ValidationError
 from app.models import Mechanics, db
 from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.util.auth import role_required, token_required, create_admin_token, create_mechanic_token
 
+# Blueprint-level exception handler so blueprint errors always return JSON
+@mechanics_bp.errorhandler(Exception)
+def mechanics_blueprint_error(err):
+    # Log the exception with traceback
+    current_app.logger.exception("Unhandled exception in mechanics blueprint")
+    tb = traceback.format_exc()
+    payload = {"message": "Internal server error", "error": str(err)}
+    # include traceback when app.debug is True
+    if current_app.debug:
+        payload["traceback"] = tb
+    resp = jsonify(payload)
+    resp.status_code = 500
+    return resp
+
 #  =========================================================================
 
 @mechanics_bp.route("/login", methods=["POST"])
 def login_mechanics():
     try:
-        # Safely get JSON body (silent=True avoids raising a BadRequest on malformed JSON)
+        # Safely get JSON body (silent=True avoids raising on malformed JSON)
         payload = request.get_json(silent=True) or {}
         # If schema expects specific fields, validate the payload via the schema
         try:
             data = login_schema.load(payload)
         except ValidationError:
-            # If schema validation fails, continue with raw payload to allow 'username' fallback
-            data = payload
+            data = payload or {}
 
-        # Debug/log the incoming payload (avoid logging passwords in production)
+        # Mask password when logging
         try:
-            from flask import current_app
-            current_app.logger.debug("Login attempt payload (masked): %s", {k: (v if k != 'password' else '***') for k, v in (data or {}).items()})
+            current_app.logger.debug("Login attempt payload (masked): %s", {k: (v if k != 'password' else '***') for k, v in data.items()})
         except Exception:
             pass
 
@@ -34,8 +47,8 @@ def login_mechanics():
         if not identifier or not password:
             return jsonify({"message": "Email/username and password are required."}), 400
 
-        # Query by email (keep consistent with your user model)
-        mechanics = db.session.query(Mechanics).where(Mechanics.email == identifier).first()
+        # Use filter() for clarity and portability
+        mechanics = db.session.query(Mechanics).filter(Mechanics.email == identifier).first()
 
         if mechanics and check_password_hash(mechanics.password, password):
             is_admin_flag = bool(getattr(mechanics, "is_admin", False))
@@ -51,14 +64,12 @@ def login_mechanics():
         return jsonify({"message": "Invalid email or password"}), 403
 
     except Exception as exc:
-        # Defensive: return JSON on unexpected errors and log the traceback
-        try:
-            from flask import current_app
-            current_app.logger.exception("Unhandled error in login_mechanics")
-        except Exception:
-            print("Unhandled error in login_mechanics:", exc)
-        # Return JSON body with error string (in DEBUG this is helpful; in prod you may sanitize)
-        return jsonify({"message": "Internal server error", "error": str(exc)}), 500
+        current_app.logger.exception("Unhandled error in login_mechanics")
+        tb = traceback.format_exc()
+        payload = {"message": "Internal server error", "error": str(exc)}
+        if current_app.debug:
+            payload["traceback"] = tb
+        return jsonify(payload), 500
 
 #  =========================================================================
 
