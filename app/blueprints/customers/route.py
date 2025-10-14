@@ -1,5 +1,5 @@
 from . import customers_bp
-from .schema import mechanic_schema, mechanics_schema, login_schema
+from app.blueprints.mechanics.schema import mechanic_schema, mechanics_schema, login_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
 from app.models import Mechanics, db
