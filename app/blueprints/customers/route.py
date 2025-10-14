@@ -1,4 +1,4 @@
-from . import mechanics_bp
+from . import customers_bp
 from .schema import mechanic_schema, mechanics_schema, login_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
@@ -9,7 +9,7 @@ from app.util.auth import role_required, token_required, create_admin_token, cre
 
 #  =========================================================================
 
-@mechanics_bp.route("/login", methods=["POST"])
+@customers_bp.route("/login", methods=["POST"])
 def login_mechanics():
     try:
         data = login_schema.load(request.json)
@@ -33,7 +33,7 @@ def login_mechanics():
 
 #  =========================================================================
 
-@mechanics_bp.route('/', methods=['POST'])
+@customers_bp.route('/', methods=['POST'])
 def create_mechanic():
     try:
         data = mechanic_schema.load(request.json)
@@ -55,7 +55,7 @@ def create_mechanic():
 
 #  =========================================================================
 
-@mechanics_bp.route('/', methods=['GET'])
+@customers_bp.route('/', methods=['GET'])
 @cache.cached(timeout=30)
 @token_required
 @role_required(['admin'])
@@ -65,7 +65,7 @@ def get_mechanics(user_id, role):
 
 #  =========================================================================
 
-@mechanics_bp.route('/profile', methods=['GET'])
+@customers_bp.route('/profile', methods=['GET'])
 @cache.cached(timeout=30)
 @token_required
 @role_required(['admin', 'mechanic'])
@@ -78,7 +78,7 @@ def get_mechanic(user_id, role):
 
 #  =========================================================================
 
-@mechanics_bp.route('/<int:mech_id>', methods=['GET'])
+@customers_bp.route('/<int:mech_id>', methods=['GET'])
 @token_required
 @role_required(['admin', 'mechanic'])
 def get_mechanic_by_id(user_id, role, mech_id):
@@ -92,7 +92,7 @@ def get_mechanic_by_id(user_id, role, mech_id):
 
 #  =========================================================================
 
-@mechanics_bp.route('/<int:mech_id>', methods=['PUT'])
+@customers_bp.route('/<int:mech_id>', methods=['PUT'])
 @token_required
 @role_required(['admin', 'mechanic'])
 def update_mechanic(user_id, role, mech_id):
@@ -125,7 +125,7 @@ def update_mechanic(user_id, role, mech_id):
 
 #  =========================================================================
 
-@mechanics_bp.route('/<int:mech_id>', methods=['DELETE'])
+@customers_bp.route('/<int:mech_id>', methods=['DELETE'])
 @token_required
 @role_required(['admin'])
 def delete_mechanic_by_id(user_id, role, mech_id):
