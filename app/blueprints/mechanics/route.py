@@ -1,6 +1,6 @@
 from . import mechanics_bp
 from .schema import mechanic_schema, mechanics_schema, login_schema
-from flask import request, jsonify, current_app
+git commitfrom flask import request, jsonify, current_app
 import traceback
 from marshmallow import ValidationError
 from app.models import Mechanics, db
@@ -97,8 +97,8 @@ def create_mechanic():
 
 @mechanics_bp.route('/', methods=['GET'])
 @cache.cached(timeout=30)
-@token_required
 @role_required(['admin'])
+@token_required
 def get_mechanics(user_id, role):
     mechanics = db.session.query(Mechanics).all()
     return mechanics_schema.jsonify(mechanics), 200
@@ -107,8 +107,8 @@ def get_mechanics(user_id, role):
 
 @mechanics_bp.route('/profile', methods=['GET'])
 @cache.cached(timeout=30)
-@token_required
 @role_required(['admin', 'mechanic'])
+@token_required
 def get_mechanic(user_id, role):
     mechanic = db.session.get(Mechanics, user_id)
     if not mechanic:
@@ -119,8 +119,8 @@ def get_mechanic(user_id, role):
 #  =========================================================================
 
 @mechanics_bp.route('/<int:mech_id>', methods=['GET'])
-@token_required
 @role_required(['admin', 'mechanic'])
+@token_required
 def get_mechanic_by_id(user_id, role, mech_id):
     # allow admin or the user themself
     if role != 'admin' and int(user_id) != int(mech_id):
@@ -133,8 +133,8 @@ def get_mechanic_by_id(user_id, role, mech_id):
 #  =========================================================================
 
 @mechanics_bp.route('/<int:mech_id>', methods=['PUT'])
-@token_required
 @role_required(['admin', 'mechanic'])
+@token_required
 def update_mechanic(user_id, role, mech_id):
     mechanic = db.session.get(Mechanics, mech_id)
     if not mechanic:
@@ -166,8 +166,8 @@ def update_mechanic(user_id, role, mech_id):
 #  =========================================================================
 
 @mechanics_bp.route('/<int:mech_id>', methods=['DELETE'])
-@token_required
 @role_required(['admin'])
+@token_required
 def delete_mechanic_by_id(user_id, role, mech_id):
     mechanic = db.session.get(Mechanics, mech_id)
     if not mechanic:
@@ -180,14 +180,14 @@ def delete_mechanic_by_id(user_id, role, mech_id):
 #  =========================================================================
 
 @mechanics_bp.route('/', methods=['PUT'], strict_slashes=False)
-@token_required
 @role_required(['admin'])
+@token_required
 def update_all_mechanics(user_id, role):
     return jsonify({"message": "Bulk update not supported"}), 400
 
 @mechanics_bp.route('/', methods=['DELETE'], strict_slashes=False)
-@token_required
 @role_required(['admin'])
+@token_required
 def delete_all_mechanics(user_id, role):
     mechanics = db.session.query(Mechanics).all()
     for mechanic in mechanics:

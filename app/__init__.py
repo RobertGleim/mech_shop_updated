@@ -98,6 +98,11 @@ def create_app(config_name='DevelopmentConfig'):
     app.register_blueprint(invoice_bp, url_prefix='/invoice')
     app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
 
+    # Simple health endpoint for quick availability checks (useful from frontend /dev proxy)
+    @app.route('/health', methods=['GET'])
+    def health():
+        return jsonify({"status": "ok"}), 200
+
     # Global exception handler that returns JSON and logs a traceback to assist debugging 500s
     @app.errorhandler(Exception)
     def handle_unexpected_error(e):
