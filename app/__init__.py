@@ -48,14 +48,26 @@ def create_app(config_name='DevelopmentConfig'):
 
     # Check if we should allow all localhost addresses
     allow_local = os.environ.get('ALLOW_LOCALHOST_CORS', os.environ.get('ALLOW_DEV_CORS', ''))
-    if str(allow_local).lower() in ('1', 'true', 'yes'):
-        # Use regex patterns to allow any localhost port
-        cors_origins.extend([
-            r"http://localhost:\d+",
-            r"http://127\.0\.0\.1:\d+",
-            r"https://localhost:\d+",
-            r"https://127\.0\.0\.1:\d+"
-        ])
+    # Auto-enable localhost for common development scenarios
+    is_development = (
+        app.debug or 
+        os.environ.get('FLASK_ENV') == 'development' or
+        os.environ.get('RENDER') is None  # Not on Render = likely local development
+    )
+    
+    if str(allow_local).lower() in ('1', 'true', 'yes') or is_development:
+        # Add specific localhost origins that work better than regex
+        localhost_origins = [
+            "http://localhost:3000", "http://127.0.0.1:3000",
+            "http://localhost:5173", "http://127.0.0.1:5173", 
+            "http://localhost:8080", "http://127.0.0.1:8080",
+            "http://localhost:4173", "http://127.0.0.1:4173",
+            "https://localhost:3000", "https://127.0.0.1:3000",
+            "https://localhost:5173", "https://127.0.0.1:5173"
+        ]
+        for origin in localhost_origins:
+            if origin not in cors_origins:
+                cors_origins.append(origin)
 
     CORS(
         app,

@@ -34,18 +34,32 @@ class ProductionConfig:
     CACHE_TYPE = "SimpleCache"
 
     # Production: allow your production API domain for all endpoints including /api/docs
-    CORS_ORIGINS = [
-        origin for origin in [
-            'https://mech-shop-api.onrender.com',
-            os.environ.get('CORS_ORIGIN_PROD', 'https://your-production-frontend.example.com'),
-            # Allow additional origins via environment variable
-            os.environ.get('CORS_ORIGIN_ADDITIONAL')
-        ] if origin
+    base_origins = [
+        'https://mech-shop-api.onrender.com',
+        os.environ.get('CORS_ORIGIN_PROD', 'https://your-production-frontend.example.com'),
+        # Allow additional origins via environment variable
+        os.environ.get('CORS_ORIGIN_ADDITIONAL')
     ]
+    
+    # For development against production API, allow localhost
+    if os.environ.get('ALLOW_DEV_CORS', '').lower() in ('1', 'true', 'yes'):
+        base_origins.extend([
+            'http://localhost:3000', 'http://127.0.0.1:3000',
+            'http://localhost:5173', 'http://127.0.0.1:5173', 
+            'http://localhost:8080', 'http://127.0.0.1:8080',
+            'http://localhost:4173', 'http://127.0.0.1:4173'
+        ])
+    
+    CORS_ORIGINS = [origin for origin in base_origins if origin]
     
     # Dynamic localhost handling is done in app/__init__.py based on ALLOW_DEV_CORS
     # This keeps production config clean while allowing flexible development
     CORS_SUPPORTS_CREDENTIALS = os.environ.get('ALLOW_DEV_CORS', '').lower() in ('1', 'true', 'yes')
+    
+    # Temporary: Allow any origin for development (REMOVE IN REAL PRODUCTION)
+    if os.environ.get('ALLOW_ANY_ORIGIN', '').lower() in ('1', 'true', 'yes'):
+        CORS_ORIGINS = ["*"]
+        CORS_SUPPORTS_CREDENTIALS = False
         
     CORS_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     CORS_HEADERS = ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
