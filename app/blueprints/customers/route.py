@@ -29,7 +29,7 @@ def login_customer():
   
 #=========================================================================
 
-@customers_bp.route('/', methods=['POST'])
+@customers_bp.route('', methods=['POST'])
 def create_customer():
     try:
         data = customer_schema.load(request.json)
@@ -44,7 +44,7 @@ def create_customer():
 
 #=========================================================================
  
-@customers_bp.route('/', methods=['GET'])
+@customers_bp.route('', methods=['GET'])
 @token_required
 @role_required(['admin', 'mechanic'])
 def get_customers(user_id, role):
@@ -91,7 +91,7 @@ def get_customer(user_id, role):
 
 #=========================================================================
  
-@customers_bp.route('/', methods=['DELETE'])
+@customers_bp.route('', methods=['DELETE'])
 @token_required
 @role_required(['admin', 'mechanic', 'customer'])
 def delete_customer(user_id, role):
@@ -112,7 +112,7 @@ def delete_customer(user_id, role):
 
 #=========================================================================
  
-@customers_bp.route('/', methods=['PUT', 'PATCH'])
+@customers_bp.route('', methods=['PUT', 'PATCH'])
 @token_required
 @role_required(['admin', 'mechanic', 'customer'])
 def update_customer(user_id, role):
@@ -147,7 +147,7 @@ def delete_customer_by_id(user_id, role, customer_id):
         db.session.delete(customer)
         db.session.commit()
         return jsonify({"message": f"Customer {customer_id} deleted"}), 200
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return jsonify({"message": "Failed to delete customer"}), 500
 
@@ -171,6 +171,6 @@ def update_customer_by_id(user_id, role, customer_id):
             setattr(customer, key, value)
         db.session.commit()
         return customer_schema.jsonify(customer), 200
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return jsonify({"message": "Failed to update customer"}), 500
