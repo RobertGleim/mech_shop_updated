@@ -1,32 +1,27 @@
 from . import customers_bp
-from app.blueprints.mechanics.schema import mechanic_schema, mechanics_schema, login_schema
+from .schema import customer_schema, customers_schema, login_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
-from app.models import Mechanics, db
+from app.models import Customers, db
 from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.util.auth import role_required, token_required, create_admin_token, create_mechanic_token
+from app.util.auth import role_required, token_required, create_customer_token
 
 #  =========================================================================
 
 @customers_bp.route("/login", methods=["POST"])
-def login_mechanics():
+def login_customer():
     try:
         data = login_schema.load(request.json)
     except ValidationError as e:
         return jsonify(e.messages), 400
 
-    mechanics = db.session.query(Mechanics).where(Mechanics.email == data["email"]).first()
+    customer = db.session.query(Customers).where(Customers.email == data["email"]).first()
 
-    if mechanics and check_password_hash(mechanics.password, data["password"]):
-        # Check if mechanic is admin and generate appropriate token
-        if getattr(mechanics, "is_admin", False):
-            token = create_admin_token(mechanics.id)
-        else:
-            token = create_mechanic_token(mechanics.id)
-
+    if customer and check_password_hash(customer.password, data["password"]):
+        token = create_customer_token(customer.id)
         return jsonify({
-            "message": f"Login successful {mechanics.first_name} {mechanics.last_name}",
+            "message": f"Login successful {customer.first_name} {customer.last_name}",
             "token": token
         }), 200
     return jsonify({"message": "Invalid email or password"}), 403
@@ -34,24 +29,22 @@ def login_mechanics():
 #  =========================================================================
 
 @customers_bp.route('/', methods=['POST'])
-def create_mechanic():
+def create_customer():
     try:
-        data = mechanic_schema.load(request.json)
+        data = customer_schema.load(request.json)
     except ValidationError as e:
         return jsonify(e.messages), 400
 
-    existing_mechanic = db.session.query(Mechanics).filter_by(email=data['email']).first()
-    if existing_mechanic:
+    existing_customer = db.session.query(Customers).filter_by(email=data['email']).first()
+    if existing_customer:
         return jsonify({"message": "Email already in use"}), 409
 
     data['password'] = generate_password_hash(data['password'])
-    # Ensure is_admin defaults to False if not provided
-    data.setdefault('is_admin', False)
-    new_mechanic = Mechanics(**data)
-    db.session.add(new_mechanic)
+    new_customer = Customers(**data)
+    db.session.add(new_customer)
     db.session.commit()
-    print(f"New mechanic was created, Hello: {new_mechanic.first_name} {new_mechanic.last_name}")
-    return mechanic_schema.jsonify(new_mechanic), 201
+    print(f"New customer was created, Hello: {new_customer.first_name} {new_customer.last_name}")
+    return customer_schema.jsonify(new_customer), 201
 
 #  =========================================================================
 
@@ -59,80 +52,77 @@ def create_mechanic():
 @cache.cached(timeout=30)
 @token_required
 @role_required(['admin'])
-def get_mechanics(user_id, role):
-    mechanics = db.session.query(Mechanics).all()
-    return mechanics_schema.jsonify(mechanics), 200
+def get_customers(user_id, role):
+    customers = db.session.query(Customers).all()
+    return customers_schema.jsonify(customers), 200
 
 #  =========================================================================
 
 @customers_bp.route('/profile', methods=['GET'])
 @cache.cached(timeout=30)
 @token_required
-@role_required(['admin', 'mechanic'])
-def get_mechanic(user_id, role):
-    mechanic = db.session.get(Mechanics, user_id)
-    if not mechanic:
-        return jsonify({"message": "Mechanic not found"}), 404
-    print(f"Mechanic found: {mechanic.first_name} {mechanic.last_name}")
-    return mechanic_schema.jsonify(mechanic), 200
+@role_required(['admin', 'customer'])
+def get_customer(user_id, role):
+    customer = db.session.get(Customers, user_id)
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
+    print(f"Customer found: {customer.first_name} {customer.last_name}")
+    return customer_schema.jsonify(customer), 200
 
 #  =========================================================================
 
-@customers_bp.route('/<int:mech_id>', methods=['GET'])
+@customers_bp.route('/<int:customer_id>', methods=['GET'])
 @token_required
-@role_required(['admin', 'mechanic'])
-def get_mechanic_by_id(user_id, role, mech_id):
+@role_required(['admin', 'customer'])
+def get_customer_by_id(user_id, role, customer_id):
     # allow admin or the user themself
-    if role != 'admin' and int(user_id) != int(mech_id):
-        return jsonify({"message": "You do not have permission to view this mechanic."}), 403
-    mechanic = db.session.get(Mechanics, mech_id)
-    if not mechanic:
-        return jsonify({"message": "Mechanic not found"}), 404
-    return mechanic_schema.jsonify(mechanic), 200
+    if role != 'admin' and int(user_id) != int(customer_id):
+        return jsonify({"message": "You do not have permission to view this customer."}), 403
+    customer = db.session.get(Customers, customer_id)
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
+    return customer_schema.jsonify(customer), 200
 
 #  =========================================================================
 
-@customers_bp.route('/<int:mech_id>', methods=['PUT'])
+@customers_bp.route('/<int:customer_id>', methods=['PUT'])
 @token_required
-@role_required(['admin', 'mechanic'])
-def update_mechanic(user_id, role, mech_id):
-    mechanic = db.session.get(Mechanics, mech_id)
-    if not mechanic:
-        return jsonify({"message": "Mechanic not found"}), 404
+@role_required(['admin', 'customer'])
+def update_customer(user_id, role, customer_id):
+    customer = db.session.get(Customers, customer_id)
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
 
     # Only allow non-admins to update their own record
-    if role != 'admin' and int(user_id) != int(mech_id):
-        return jsonify({"message": "You do not have permission to update this mechanic."}), 403
+    if role != 'admin' and int(user_id) != int(customer_id):
+        return jsonify({"message": "You do not have permission to update this customer."}), 403
 
     try:
-        mech_data = mechanic_schema.load(request.json)
+        customer_data = customer_schema.load(request.json)
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
 
     # Hash password if present
-    if 'password' in mech_data and mech_data['password']:
-        mech_data['password'] = generate_password_hash(mech_data['password'])
-    # Prevent downgrading admin flag by non-admins
-    if role != 'admin' and 'is_admin' in mech_data:
-        mech_data.pop('is_admin', None)
+    if 'password' in customer_data and customer_data['password']:
+        customer_data['password'] = generate_password_hash(customer_data['password'])
 
-    for key, value in mech_data.items():
-        setattr(mechanic, key, value)
+    for key, value in customer_data.items():
+        setattr(customer, key, value)
 
     db.session.commit()
-    print(f"Mechanic updated: {mechanic.first_name} {mechanic.last_name}")
-    return mechanic_schema.jsonify(mechanic), 200
+    print(f"Customer updated: {customer.first_name} {customer.last_name}")
+    return customer_schema.jsonify(customer), 200
 
 #  =========================================================================
 
-@customers_bp.route('/<int:mech_id>', methods=['DELETE'])
+@customers_bp.route('/<int:customer_id>', methods=['DELETE'])
 @token_required
 @role_required(['admin'])
-def delete_mechanic_by_id(user_id, role, mech_id):
-    mechanic = db.session.get(Mechanics, mech_id)
-    if not mechanic:
-        return jsonify({"message": "Mechanic not found"}), 404
-    db.session.delete(mechanic)
+def delete_customer_by_id(user_id, role, customer_id):
+    customer = db.session.get(Customers, customer_id)
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
+    db.session.delete(customer)
     db.session.commit()
-    print(f"Mechanic deleted: {mechanic.first_name} {mechanic.last_name}")
-    return jsonify({"message": f"Mechanic {mech_id} deleted"}), 200
+    print(f"Customer deleted: {customer.first_name} {customer.last_name}")
+    return jsonify({"message": f"Customer {customer_id} deleted"}), 200
