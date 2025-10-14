@@ -54,7 +54,7 @@ def create_customer():
 @role_required(['admin'])
 def get_customers(user_id, role):
     customers = db.session.query(Customers).all()
-    return customers_schema.jsonify(customers), 200
+    return jsonify({"customers": customers_schema.dump(customers)}), 200
 
 #  =========================================================================
 
@@ -126,3 +126,21 @@ def delete_customer_by_id(user_id, role, customer_id):
     db.session.commit()
     print(f"Customer deleted: {customer.first_name} {customer.last_name}")
     return jsonify({"message": f"Customer {customer_id} deleted"}), 200
+
+#  =========================================================================
+
+@customers_bp.route('/', methods=['DELETE'])
+@token_required
+@role_required(['admin'])
+def delete_all_customers(user_id, role):
+    customers = db.session.query(Customers).all()
+    for customer in customers:
+        db.session.delete(customer)
+    db.session.commit()
+    return jsonify({"message": "All customers deleted"}), 200
+
+@customers_bp.route('/', methods=['PUT'])
+@token_required
+@role_required(['admin'])
+def update_all_customers(user_id, role):
+    return jsonify({"message": "Bulk update not supported"}), 400
