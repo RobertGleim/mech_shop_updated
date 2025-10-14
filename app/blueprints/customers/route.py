@@ -51,7 +51,7 @@ def create_customer():
 @customers_bp.route('/', methods=['GET'])
 @cache.cached(timeout=30)
 @token_required
-@role_required(['admin', 'customer'])
+@role_required(['admin', 'customer', 'mechanic'])
 def get_customers(user_id, role):
     customers = db.session.query(Customers).all()
     return jsonify({"customers": customers_schema.dump(customers)}), 200
