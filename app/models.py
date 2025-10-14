@@ -1,7 +1,7 @@
 import datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Integer, String, Table
+from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Integer, String, Table, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from datetime import date, datetime
 
@@ -78,9 +78,9 @@ class Mechanics(Base):
     last_name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(360), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(500), nullable=False)
-    salary: Mapped[float] = mapped_column(nullable=False)
+    salary: Mapped[float] = mapped_column(Float, nullable=False)
     address: Mapped[str] = mapped_column(String(500), nullable=True)
-    is_admin: Mapped[bool] = mapped_column(nullable=False, default=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     service_tickets: Mapped[list['Service_Ticket']] = relationship(
         'Service_Ticket',
