@@ -51,7 +51,7 @@ def create_customer():
 @customers_bp.route('/', methods=['GET'])
 @cache.cached(timeout=30)
 @token_required
-@role_required(['admin'])
+@role_required(['admin', 'customer'])
 def get_customers(user_id, role):
     customers = db.session.query(Customers).all()
     return jsonify({"customers": customers_schema.dump(customers)}), 200
@@ -85,10 +85,14 @@ def get_customer_by_id(user_id, role, customer_id):
 
 #  =========================================================================
 
-@customers_bp.route('/<int:customer_id>', methods=['PUT'])
+@customers_bp.route('/', methods=['PUT'], strict_slashes=False)
+@customers_bp.route('/<int:customer_id>', methods=['PUT'], strict_slashes=False)
 @token_required
 @role_required(['admin', 'customer'])
-def update_customer(user_id, role, customer_id):
+def update_customer(user_id, role, customer_id=None):
+    if customer_id is None:
+        return jsonify({"message": "Customer ID required"}), 400
+        
     customer = db.session.get(Customers, customer_id)
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
@@ -115,32 +119,24 @@ def update_customer(user_id, role, customer_id):
 
 #  =========================================================================
 
-@customers_bp.route('/<int:customer_id>', methods=['DELETE'])
+@customers_bp.route('/', methods=['DELETE'], strict_slashes=False)
+@customers_bp.route('/<int:customer_id>', methods=['DELETE'], strict_slashes=False)
 @token_required
 @role_required(['admin'])
-def delete_customer_by_id(user_id, role, customer_id):
-    customer = db.session.get(Customers, customer_id)
-    if not customer:
-        return jsonify({"message": "Customer not found"}), 404
-    db.session.delete(customer)
-    db.session.commit()
-    print(f"Customer deleted: {customer.first_name} {customer.last_name}")
-    return jsonify({"message": f"Customer {customer_id} deleted"}), 200
-
-#  =========================================================================
-
-@customers_bp.route('/', methods=['DELETE'])
-@token_required
-@role_required(['admin'])
-def delete_all_customers(user_id, role):
-    customers = db.session.query(Customers).all()
-    for customer in customers:
+def delete_customer_by_id(user_id, role, customer_id=None):
+    if customer_id is None:
+        # Delete all customers
+        customers = db.session.query(Customers).all()
+        for customer in customers:
+            db.session.delete(customer)
+        db.session.commit()
+        return jsonify({"message": "All customers deleted"}), 200
+    else:
+        # Delete specific customer
+        customer = db.session.get(Customers, customer_id)
+        if not customer:
+            return jsonify({"message": "Customer not found"}), 404
         db.session.delete(customer)
-    db.session.commit()
-    return jsonify({"message": "All customers deleted"}), 200
-
-@customers_bp.route('/', methods=['PUT'])
-@token_required
-@role_required(['admin'])
-def update_all_customers(user_id, role):
-    return jsonify({"message": "Bulk update not supported"}), 400
+        db.session.commit()
+        print(f"Customer deleted: {customer.first_name} {customer.last_name}")
+        return jsonify({"message": f"Customer {customer_id} deleted"}), 200
