@@ -1,0 +1,8 @@
+import os
+import sys
+
+# This file is a removed helper; kept as backup but not used by pytest
+# Original conftest content archived here.
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)

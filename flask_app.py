@@ -1,6 +1,6 @@
 from app import create_app
 from app.models import db, Mechanics
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash  # Import password hashing function
 import os
 from dotenv import load_dotenv
@@ -15,10 +15,41 @@ app = create_app(config_name)
 with app.app_context():
     # First, check if is_admin column exists and add it if missing
     try:
-        # Try to add the column if it doesn't exist
-        db.session.execute(text("ALTER TABLE mechanics ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE"))
-        db.session.commit()
-        print("Checked/added is_admin column")
+        # Try to inspect existing columns first (portable across DB backends)
+        cols = []
+        try:
+            inspector = inspect(db.engine)
+            cols = [c['name'] for c in inspector.get_columns('mechanics')]
+        except Exception:
+            # Fallback for SQLite or if inspector isn't available
+            try:
+                result = db.session.execute(text("PRAGMA table_info('mechanics')")).fetchall()
+                cols = [row[1] for row in result]
+            except Exception as inner_e:
+                print(f"Could not determine mechanics table columns: {inner_e}")
+                cols = []
+
+        if 'is_admin' not in cols:
+            # Add column using a dialect-appropriate SQL statement
+            dialect = getattr(db.engine, 'dialect', None)
+            dialect_name = getattr(dialect, 'name', '') if dialect else ''
+            if dialect_name == 'sqlite':
+                add_stmt = "ALTER TABLE mechanics ADD COLUMN is_admin INTEGER DEFAULT 0"
+            elif dialect_name in ('postgresql', 'postgres'):
+                add_stmt = "ALTER TABLE mechanics ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE"
+            else:
+                # Generic boolean fallback
+                add_stmt = "ALTER TABLE mechanics ADD COLUMN is_admin BOOLEAN DEFAULT FALSE"
+
+            try:
+                db.session.execute(text(add_stmt))
+                db.session.commit()
+                print("Added is_admin column to mechanics table")
+            except Exception as add_err:
+                print(f"Error adding is_admin column: {add_err}")
+                db.session.rollback()
+        else:
+            print("is_admin column already exists")
     except Exception as e:
         print(f"Error checking/adding column: {e}")
         db.session.rollback()
