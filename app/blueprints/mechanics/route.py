@@ -136,3 +136,21 @@ def delete_mechanic_by_id(user_id, role, mech_id):
     db.session.commit()
     print(f"Mechanic deleted: {mechanic.first_name} {mechanic.last_name}")
     return jsonify({"message": f"Mechanic {mech_id} deleted"}), 200
+
+#  =========================================================================
+
+@mechanics_bp.route('/', methods=['PUT'], strict_slashes=False)
+@token_required
+@role_required(['admin'])
+def update_all_mechanics(user_id, role):
+    return jsonify({"message": "Bulk update not supported"}), 400
+
+@mechanics_bp.route('/', methods=['DELETE'], strict_slashes=False)
+@token_required
+@role_required(['admin'])
+def delete_all_mechanics(user_id, role):
+    mechanics = db.session.query(Mechanics).all()
+    for mechanic in mechanics:
+        db.session.delete(mechanic)
+    db.session.commit()
+    return jsonify({"message": "All mechanics deleted"}), 200
