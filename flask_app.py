@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Use environment variable to determine config, default to ProductionConfig
-config_name = os.environ.get('FLASK_CONFIG', 'ProductionConfig')
+# Use environment variable to determine config, default to DevelopmentConfig (was ProductionConfig)
+config_name = os.environ.get('FLASK_CONFIG', 'DevelopmentConfig')
 app = create_app(config_name)
 
 with app.app_context():

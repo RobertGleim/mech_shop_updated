@@ -22,6 +22,7 @@ def role_required(required_roles):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
+            # role is expected to be injected by token_required into kwargs
             role = kwargs.get('role')
             if role not in required_roles:
                 return jsonify({'message': 'You do not have permission to access this resource.'}), 403
@@ -44,24 +45,36 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        
-        # Get Authorization header
+
+        # 1) Try Authorization header
         auth_header = request.headers.get('Authorization')
-        
         if auth_header and auth_header.startswith('Bearer '):
-            token = auth_header.split(' ')[1]
-                
+            token = auth_header.split(' ', 1)[1].strip()
+
+        # 2) Fallback to cookie (if using cookie-based storage)
+        if not token:
+            token = request.cookies.get('token')
+
+        # 3) Fallback to query parameter ?token=...
+        if not token:
+            token = request.args.get('token')
+
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401 
-        
+
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            user_id = data["sub"]
+            user_id = data.get("sub")
             role = data.get("role", "mechanic")
         except jose_exceptions.ExpiredSignatureError:
-            return jsonify({"message": "Token is expired!"}), 403
+            return jsonify({"message": "Token is expired!"}), 401
         except jose_exceptions.JWTError:
-            return jsonify({"message": "Token is invalid!"}), 403
-            
-        return f(user_id=user_id, role=role, *args, **kwargs)
+            return jsonify({"message": "Token is invalid!"}), 401
+
+        # Inject user_id and role into kwargs safely, then call the wrapped function
+        kwargs = dict(kwargs)  # copy to avoid mutating caller's dict
+        kwargs['user_id'] = user_id
+        kwargs['role'] = role
+
+        return f(*args, **kwargs)
     return decorated
