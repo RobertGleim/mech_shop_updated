@@ -5,7 +5,7 @@ from flask import request, jsonify
 from jose import exceptions as jose_exceptions
 import os
 
-SECRET_KEY = os.environ.get("SECRET_KEY", ) or "super secret key"
+SECRET_KEY = os.environ.get("SECRET_KEY") or "super secret key"
 
 
 def create_admin_token(user_id):
@@ -23,7 +23,6 @@ def role_required(required_roles):
         @wraps(f)
         def wrapper(*args, **kwargs):
             role = kwargs.get('role')
-            # print(f"[DEBUG] role_required: role={role}, required_roles={required_roles}") ## used to figure out problems with role base access
             if role not in required_roles:
                 return jsonify({'message': 'You do not have permission to access this resource.'}), 403
             return f(*args, **kwargs)
@@ -32,14 +31,13 @@ def role_required(required_roles):
 
 def encode_token(user_id, role='mechanic'):
     payload = {
-        "exp": datetime.now(timezone.utc) + timedelta( hours=1),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
         "iat": datetime.now(timezone.utc),
         "sub": str(user_id),
         "role": role
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
-    
 
 
 def token_required(f):
@@ -47,32 +45,23 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token = None
         
-        # Debug authentication headers
-        print(f"Headers: {request.headers}")
+        # Get Authorization header
+        auth_header = request.headers.get('Authorization')
         
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            print(f"Auth header: {auth_header}")
-            
-            # Make sure it properly extracts the token part after "Bearer "
-            if auth_header.startswith('Bearer '):
-                token = auth_header.split(' ')[1]
-                print(f"Token extracted: {token[:10]}...")
-            else:
-                print("Missing Bearer prefix")
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
                 
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401 
         
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            print(data)
             user_id = data["sub"]
-            role = data.get("role", "role")
+            role = data.get("role", "mechanic")
         except jose_exceptions.ExpiredSignatureError:
             return jsonify({"message": "Token is expired!"}), 403
         except jose_exceptions.JWTError:
             return jsonify({"message": "Token is invalid!"}), 403
+            
         return f(user_id=user_id, role=role, *args, **kwargs)
     return decorated
-

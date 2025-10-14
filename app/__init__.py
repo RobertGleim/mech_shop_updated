@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, Response
 import os
 from .models import db
 from .extenstions import ma, limiter, cache
@@ -17,12 +17,7 @@ API_URL = '/static/swagger.yaml'
 
 
 def create_app(config_name='DevelopmentConfig'):
-    """Application factory
-
-    Creates the Flask app, loads configuration, initializes extensions and
-    registers blueprints. CORS is configured inside the factory so app.config
-    is available (avoids import-time access to app.config).
-    """
+    """Application factory"""
     app = Flask(__name__, instance_relative_config=False)
 
     # Load configuration from config module
@@ -37,7 +32,7 @@ def create_app(config_name='DevelopmentConfig'):
     # Configure Swagger UI blueprint
     swagger_blueprint = get_swaggerui_blueprint(SWAGGER_URL, API_URL, config={'app_name': "Mechanic Shop API"})
 
-    # === CORS configuration ===
+    # === Enhanced CORS configuration ===
     cors_origins = app.config.get('CORS_ORIGINS', ["http://localhost:5173"])
     # Ensure list type
     if isinstance(cors_origins, str):
@@ -46,21 +41,31 @@ def create_app(config_name='DevelopmentConfig'):
     cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
 
-    # Debug: Print CORS configuration
-    print(f"CORS Origins: {cors_origins}")
-    print(f"CORS Credentials: {cors_supports_credentials}")
-
-    # Simplified CORS configuration - allow all configured origins
+    # Enhanced CORS configuration with explicit OPTIONS handling
     CORS(
         app,
         origins=cors_origins,
         supports_credentials=cors_supports_credentials,
         methods=cors_methods,
         allow_headers=cors_headers,
-        # Add expose headers for better compatibility
-        expose_headers=["Content-Range", "X-Content-Range"]
+        expose_headers=["Content-Range", "X-Content-Range"],
+        # Ensure preflight requests work properly
+        send_wildcard=False,
+        # Handle OPTIONS requests automatically
+        automatic_options=True
     )
-    # ==========================
+
+    # Add explicit OPTIONS handler for all routes
+    @app.before_request
+    def handle_preflight():
+        if request.method == "OPTIONS":
+            res = Response()
+            res.headers['X-Content-Type-Options'] = '*'
+            res.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+            res.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+            res.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+            res.headers['Access-Control-Allow-Credentials'] = 'true'
+            return res
 
     # Register blueprints
     app.register_blueprint(customers_bp, url_prefix='/customers')
@@ -73,6 +78,3 @@ def create_app(config_name='DevelopmentConfig'):
     app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
 
     return app
-
-
-
