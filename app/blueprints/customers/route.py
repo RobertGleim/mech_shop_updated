@@ -49,9 +49,9 @@ def create_customer():
 #  =========================================================================
 
 @customers_bp.route('/', methods=['GET'])
-@cache.cached(timeout=30)
-@role_required(['admin', 'customer', 'mechanic'])
 @token_required
+@role_required(['admin', 'customer', 'mechanic'])
+@cache.cached(timeout=30)
 def get_customers(user_id, role):
     customers = db.session.query(Customers).all()
     return jsonify({"customers": customers_schema.dump(customers)}), 200
@@ -59,9 +59,9 @@ def get_customers(user_id, role):
 #  =========================================================================
 
 @customers_bp.route('/profile', methods=['GET'])
-@cache.cached(timeout=30)
-@role_required(['admin', 'customer'])
 @token_required
+@role_required(['admin', 'customer'])
+@cache.cached(timeout=30)
 def get_customer(user_id, role):
     customer = db.session.get(Customers, user_id)
     if not customer:
@@ -72,8 +72,8 @@ def get_customer(user_id, role):
 #  =========================================================================
 
 @customers_bp.route('/<int:customer_id>', methods=['GET'])
-@role_required(['admin', 'customer'])
 @token_required
+@role_required(['admin', 'customer'])
 def get_customer_by_id(user_id, role, customer_id):
     # allow admin or the user themself
     if role != 'admin' and int(user_id) != int(customer_id):
@@ -86,8 +86,8 @@ def get_customer_by_id(user_id, role, customer_id):
 #  =========================================================================
 
 @customers_bp.route('/', methods=['PUT'], strict_slashes=False)
-@role_required(['admin', 'customer'])
 @token_required
+@role_required(['admin', 'customer'])
 def update_customer_without_id(user_id, role):
     # For customers, update their own profile using the token user_id
     customer = db.session.get(Customers, user_id)
@@ -111,8 +111,8 @@ def update_customer_without_id(user_id, role):
     return customer_schema.jsonify(customer), 200
 
 @customers_bp.route('/<int:customer_id>', methods=['PUT'], strict_slashes=False)
-@role_required(['admin', 'customer'])
 @token_required
+@role_required(['admin', 'customer'])
 def update_customer_by_id(user_id, role, customer_id):
     customer = db.session.get(Customers, customer_id)
     if not customer:
@@ -141,8 +141,8 @@ def update_customer_by_id(user_id, role, customer_id):
 #  =========================================================================
 
 @customers_bp.route('/', methods=['DELETE'], strict_slashes=False)
-@role_required(['admin'])
 @token_required
+@role_required(['admin'])
 def delete_all_customers(user_id, role):
     customers = db.session.query(Customers).all()
     for customer in customers:
@@ -151,8 +151,8 @@ def delete_all_customers(user_id, role):
     return jsonify({"message": "All customers deleted"}), 200
 
 @customers_bp.route('/<int:customer_id>', methods=['DELETE'], strict_slashes=False)
-@role_required(['admin'])
 @token_required
+@role_required(['admin'])
 def delete_customer_by_id(user_id, role, customer_id):
     customer = db.session.get(Customers, customer_id)
     if not customer:
