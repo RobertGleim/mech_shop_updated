@@ -14,26 +14,27 @@ from sqlalchemy import or_
 def login_customer():
     try:
         data = login_schema.load(request.json)
-    except ValidationError as e: 
+    except ValidationError as e:
         return jsonify(e.messages), 400
-    
-    customer = db.session.query(Customers).where(Customers.email==data["email"]).first()
-    
+
+    customer = db.session.query(Customers).where(Customers.email==data["email"]).first()  
+
     if customer and check_password_hash(customer.password, data["password"]):
         token = create_customer_token(customer.id)
         return jsonify({
-            "message": f"Login successful {customer.first_name} {customer.last_name}",
+            "message": f"Login successful {customer.first_name} {customer.last_name}",    
             "token": token
         }), 200
-    return jsonify({"message": "Invalid email or password"}), 403 
-  
+    return jsonify({"message": "Invalid email or password"}), 403
+
 #=========================================================================
 
-@customers_bp.route('', methods=['POST'])
+# Use strict_slashes=False to handle both /customers and /customers/ URLs
+@customers_bp.route('/', methods=['POST'], strict_slashes=False)
 def create_customer():
     try:
         data = customer_schema.load(request.json)
-    except ValidationError as e: 
+    except ValidationError as e:
         return jsonify(e.messages), 400
     data['password'] = generate_password_hash(data['password'])
 
@@ -43,8 +44,8 @@ def create_customer():
     return customer_schema.jsonify(new_customer), 201
 
 #=========================================================================
- 
-@customers_bp.route('', methods=['GET'])
+
+@customers_bp.route('/', methods=['GET'], strict_slashes=False)
 @token_required
 @role_required(['admin', 'mechanic'])
 def get_customers(user_id, role):
@@ -79,26 +80,25 @@ def get_customers(user_id, role):
     return jsonify(response), 200
 
 #=========================================================================
- 
+
 @customers_bp.route('/profile', methods=['GET'])
 @token_required
 @role_required(['admin', 'mechanic', 'customer'])
 def get_customer(user_id, role):
-    customer = db.session.get(Customers, user_id) 
+    customer = db.session.get(Customers, user_id)
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
     return customer_schema.jsonify(customer), 200
 
 #=========================================================================
- 
-@customers_bp.route('', methods=['DELETE'])
+
+@customers_bp.route('/', methods=['DELETE'], strict_slashes=False)
 @token_required
 @role_required(['admin', 'mechanic', 'customer'])
 def delete_customer(user_id, role):
     # Prevent admin users from deleting themselves via this endpoint
     if role == 'admin':
         return jsonify({"message": "Admin users are not allowed to delete their own account here."}), 403
-
     customer = db.session.get(Customers, user_id)
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
@@ -111,13 +111,13 @@ def delete_customer(user_id, role):
         return jsonify({"message": "Failed to delete customer"}), 500
 
 #=========================================================================
- 
-@customers_bp.route('', methods=['PUT', 'PATCH'])
+
+@customers_bp.route('/', methods=['PUT', 'PATCH'], strict_slashes=False)
 @token_required
 @role_required(['admin', 'mechanic', 'customer'])
 def update_customer(user_id, role):
     customer = db.session.get(Customers, user_id)
-    
+
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
     try:
@@ -125,11 +125,11 @@ def update_customer(user_id, role):
         customer_data = customer_schema.load(request.json, partial=True)
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
-    
+
     # Only hash password if it's being updated
     if 'password' in customer_data:
-        customer_data['password'] = generate_password_hash(customer_data['password'])
-    
+        customer_data['password'] = generate_password_hash(customer_data['password'])     
+
     for key, value in customer_data.items():
         setattr(customer, key, value)
     db.session.commit()
