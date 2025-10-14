@@ -33,13 +33,19 @@ class ProductionConfig:
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI') or 'sqlite:///mechanic_shop.db'
     CACHE_TYPE = "SimpleCache"
 
-    # Production: only allow your production frontend origin(s).
-    # Put your real production front-end domain(s) here, or set via env var.
+    # Production: allow your production API domain for all endpoints including /api/docs
     CORS_ORIGINS = [
-        os.environ.get('CORS_ORIGIN_PROD', 'https://your-production-frontend.example.com'),
-        # if you proxy the API under a different host you can add it too:
-        os.environ.get('CORS_ORIGIN_API', 'https://mech-shop-api.onrender.com')
+        origin for origin in [
+            'https://mech-shop-api.onrender.com',
+            os.environ.get('CORS_ORIGIN_PROD', 'https://your-production-frontend.example.com'),
+            # Allow additional origins via environment variable
+            os.environ.get('CORS_ORIGIN_ADDITIONAL')
+        ] if origin
     ]
-    CORS_SUPPORTS_CREDENTIALS = False
+    
+    # Dynamic localhost handling is done in app/__init__.py based on ALLOW_DEV_CORS
+    # This keeps production config clean while allowing flexible development
+    CORS_SUPPORTS_CREDENTIALS = os.environ.get('ALLOW_DEV_CORS', '').lower() in ('1', 'true', 'yes')
+        
     CORS_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-    CORS_HEADERS = ["Content-Type", "Authorization", "X-Requested-With"]
+    CORS_HEADERS = ["Content-Type", "Authorization", "X-Requested-With", "Accept"]

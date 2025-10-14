@@ -2,8 +2,15 @@ from app import create_app
 from app.models import db, Mechanics
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash  # Import password hashing function
+import os
+from dotenv import load_dotenv
 
-app = create_app('ProductionConfig')
+# Load environment variables from .env file
+load_dotenv()
+
+# Use environment variable to determine config, default to ProductionConfig
+config_name = os.environ.get('FLASK_CONFIG', 'ProductionConfig')
+app = create_app(config_name)
 
 with app.app_context():
     # First, check if is_admin column exists and add it if missing

@@ -46,16 +46,20 @@ def create_app(config_name='DevelopmentConfig'):
     cors_methods = app.config.get('CORS_METHODS', ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
 
-    # Optionally allow localhost dev origins in non-dev environments when explicitly enabled
+    # Check if we should allow all localhost addresses
     allow_local = os.environ.get('ALLOW_LOCALHOST_CORS', os.environ.get('ALLOW_DEV_CORS', ''))
     if str(allow_local).lower() in ('1', 'true', 'yes'):
-        for dev_origin in ("http://localhost:5173", "http://127.0.0.1:5173"):
-            if dev_origin not in cors_origins:
-                cors_origins.append(dev_origin)
+        # Use regex patterns to allow any localhost port
+        cors_origins.extend([
+            r"http://localhost:\d+",
+            r"http://127\.0\.0\.1:\d+",
+            r"https://localhost:\d+",
+            r"https://127\.0\.0\.1:\d+"
+        ])
 
     CORS(
         app,
-        resources={r"/*": {"origins": cors_origins}},
+        origins=cors_origins,
         supports_credentials=cors_supports_credentials,
         methods=cors_methods,
         allow_headers=cors_headers
