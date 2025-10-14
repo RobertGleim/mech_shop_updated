@@ -1,6 +1,6 @@
 from . import mechanics_bp
 from .schema import mechanic_schema, mechanics_schema, login_schema
-git commitfrom flask import request, jsonify, current_app
+from flask import request, jsonify, current_app
 import traceback
 from marshmallow import ValidationError
 from app.models import Mechanics, db
