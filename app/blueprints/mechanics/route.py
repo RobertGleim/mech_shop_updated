@@ -7,6 +7,7 @@ from app.models import Mechanics, db
 from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.util.auth import role_required, token_required, create_admin_token, create_mechanic_token
+from sqlalchemy.exc import IntegrityError
 
 # Blueprint-level exception handler so blueprint errors always return JSON
 @mechanics_bp.errorhandler(Exception)
@@ -145,22 +146,43 @@ def update_mechanic(user_id, role, mech_id):
         return jsonify({"message": "You do not have permission to update this mechanic."}), 403
 
     try:
-        mech_data = mechanic_schema.load(request.json)
+        # allow partial updates (don't require all fields)
+        payload = request.json or {}
+        mech_data = mechanic_schema.load(payload, partial=True)
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
 
     # Hash password if present
     if 'password' in mech_data and mech_data['password']:
         mech_data['password'] = generate_password_hash(mech_data['password'])
+
     # Prevent downgrading admin flag by non-admins
     if role != 'admin' and 'is_admin' in mech_data:
         mech_data.pop('is_admin', None)
 
+    # Coerce numeric fields safely (salary may come as string)
+    if 'salary' in mech_data and mech_data['salary'] is not None:
+        try:
+            mech_data['salary'] = float(mech_data['salary'])
+        except (TypeError, ValueError):
+            return jsonify({"message": {"salary": ["Salary must be a number."]}}), 400
+
     for key, value in mech_data.items():
         setattr(mechanic, key, value)
 
-    db.session.commit()
-    print(f"Mechanic updated: {mechanic.first_name} {mechanic.last_name}")
+    try:
+        db.session.commit()
+    except IntegrityError as ie:
+        db.session.rollback()
+        # likely duplicate email
+        current_app.logger.debug("IntegrityError updating mechanic: %s", ie)
+        return jsonify({"message": "Email already in use"}), 409
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.exception("Error updating mechanic")
+        return jsonify({"message": "Internal server error", "error": str(exc)}), 500
+
+    current_app.logger.debug(f"Mechanic updated: {mechanic.id} {mechanic.email}")
     return mechanic_schema.jsonify(mechanic), 200
 
 #  =========================================================================
