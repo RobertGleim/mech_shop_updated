@@ -53,7 +53,8 @@ def create_customer():
 @cache.cached(timeout=30)
 def get_customers(user_id, role):
     customers = db.session.query(Customers).all()
-    return jsonify({"customers": customers_schema.dump(customers)}), 200
+    # return customers wrapped in a key caused shape mismatch at times; return the array directly
+    return customers_schema.jsonify(customers), 200
 
 #  =========================================================================
 
