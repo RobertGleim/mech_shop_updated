@@ -6,6 +6,7 @@ from app.models import Customers, db
 from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.util.auth import role_required, token_required, create_customer_token
+from sqlalchemy.exc import IntegrityError
 
 #  =========================================================================
 
@@ -92,7 +93,8 @@ def update_customer_without_id(user_id, role):
         return jsonify({"message": "Customer not found"}), 404
 
     try:
-        customer_data = customer_schema.load(request.json)
+        # allow partial updates (don't require all fields)
+        customer_data = customer_schema.load(request.json or {}, partial=True)
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
 
@@ -102,7 +104,15 @@ def update_customer_without_id(user_id, role):
     for key, value in customer_data.items():
         setattr(customer, key, value)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"message": "Email already in use"}), 409
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Internal server error", "error": str(e)}), 500
+
     return customer_schema.jsonify(customer), 200
 
 @customers_bp.route('/<int:customer_id>', methods=['PUT'], strict_slashes=False)
@@ -117,7 +127,8 @@ def update_customer_by_id(user_id, role, customer_id):
         return jsonify({"message": "You do not have permission to update this customer."}), 403
 
     try:
-        customer_data = customer_schema.load(request.json)
+        # allow partial updates (don't require all fields)
+        customer_data = customer_schema.load(request.json or {}, partial=True)
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
 
@@ -127,7 +138,15 @@ def update_customer_by_id(user_id, role, customer_id):
     for key, value in customer_data.items():
         setattr(customer, key, value)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"message": "Email already in use"}), 409
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Internal server error", "error": str(e)}), 500
+
     return customer_schema.jsonify(customer), 200
 
 #  =========================================================================
