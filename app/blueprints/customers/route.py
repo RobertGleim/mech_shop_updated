@@ -3,7 +3,6 @@ from .schema import customer_schema, customers_schema, login_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
 from app.models import Customers, db
-from app.extenstions import limiter, cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.util.auth import role_required, token_required, create_customer_token
 from sqlalchemy.exc import IntegrityError
@@ -51,18 +50,15 @@ def create_customer():
 @customers_bp.route('/', methods=['GET'])
 @token_required
 @role_required(['admin', 'customer', 'mechanic'])
-@cache.cached(timeout=30)
 def get_customers(user_id, role):
     customers = db.session.query(Customers).all()
-    # return customers wrapped in a key caused shape mismatch at times; return the array directly
-    return customers_schema.jsonify(customers), 200
+    return jsonify({"customers": customers_schema.dump(customers)}), 200
 
 #  =========================================================================
 
 @customers_bp.route('/profile', methods=['GET'])
 @token_required
 @role_required(['admin', 'customer'])
-@cache.cached(timeout=30)
 def get_customer(user_id, role):
     customer = db.session.get(Customers, user_id)
     if not customer:
