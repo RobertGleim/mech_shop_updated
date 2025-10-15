@@ -25,6 +25,10 @@ def create_app(config_name='DevelopmentConfig'):
     # Load configuration from config module
     app.config.from_object(f'config.{config_name}')
 
+    # Prevent Flask from redirecting between trailing-slash/no-trailing-slash URLs.
+    # Redirects can remove Authorization headers — disabling strict slashes avoids that.
+    app.url_map.strict_slashes = False
+
     # Initialize extensions that require the app
     db.init_app(app)
     ma.init_app(app)
@@ -44,16 +48,16 @@ def create_app(config_name='DevelopmentConfig'):
     cors_headers = app.config.get('CORS_HEADERS', ["Content-Type", "Authorization", "X-Requested-With"])
 
     # Enhanced CORS configuration with explicit OPTIONS handling
+    # ensure 'resources' covers all endpoints so CORS rules apply consistently
     CORS(
         app,
+        resources={r"/*": {"origins": cors_origins}},
         origins=cors_origins,
         supports_credentials=cors_supports_credentials,
         methods=cors_methods,
         allow_headers=cors_headers,
         expose_headers=["Content-Range", "X-Content-Range"],
-        # Ensure preflight requests work properly
         send_wildcard=False,
-        # Handle OPTIONS requests automatically
         automatic_options=True
     )
 
@@ -64,10 +68,32 @@ def create_app(config_name='DevelopmentConfig'):
             res = Response(status=200)
             res.headers['X-Content-Type-Options'] = 'nosniff'
             res.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
-            res.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+            res.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS,PATCH'
             res.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
             res.headers['Access-Control-Allow-Credentials'] = 'true'
             return res
+
+    # Ensure all real responses include CORS headers (prevents Authorization being dropped)
+    @app.after_request
+    def add_cors_headers(response):
+        origin = request.headers.get('Origin') or '*'
+        # Only echo back allowed origin or '*' (keeps responses explicit)
+        if cors_origins and origin != '*' and origin in cors_origins:
+            response.headers['Access-Control-Allow-Origin'] = origin
+        else:
+            response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = ','.join(cors_methods)
+        response.headers['Access-Control-Allow-Headers'] = ','.join(cors_headers)
+        # helpful expose header
+        response.headers.setdefault('Access-Control-Expose-Headers', 'Content-Range, X-Content-Range')
+        return response
+
+    # Log all incoming headers for debugging
+    @app.before_request
+    def log_incoming_headers():
+        app.logger.debug(f"Incoming request: {request.method} {request.path}")
+        app.logger.debug(f"Headers: {dict(request.headers)}")
 
     # Enable debug logging to console
     if not app.logger.handlers:

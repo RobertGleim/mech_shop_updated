@@ -78,7 +78,7 @@ with app.app_context():
             password=hashed_password,  # Store as hashed password
             salary=75000,
             address='123 fun street',
-            is_admin=True
+            is_admin=True  # <-- Ensure this is True
         )
         db.session.add(admin_mechanic)
         db.session.commit()

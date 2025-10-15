@@ -43,7 +43,6 @@ def create_customer():
     new_customer = Customers(**data)
     db.session.add(new_customer)
     db.session.commit()
-    print(f"New customer was created, Hello: {new_customer.first_name} {new_customer.last_name}")
     return customer_schema.jsonify(new_customer), 201
 
 #  =========================================================================
@@ -66,7 +65,6 @@ def get_customer(user_id, role):
     customer = db.session.get(Customers, user_id)
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
-    print(f"Customer found: {customer.first_name} {customer.last_name}")
     return customer_schema.jsonify(customer), 200
 
 #  =========================================================================
@@ -75,7 +73,6 @@ def get_customer(user_id, role):
 @token_required
 @role_required(['admin', 'customer'])
 def get_customer_by_id(user_id, role, customer_id):
-    # allow admin or the user themself
     if role != 'admin' and int(user_id) != int(customer_id):
         return jsonify({"message": "You do not have permission to view this customer."}), 403
     customer = db.session.get(Customers, customer_id)
@@ -89,7 +86,6 @@ def get_customer_by_id(user_id, role, customer_id):
 @token_required
 @role_required(['admin', 'customer'])
 def update_customer_without_id(user_id, role):
-    # For customers, update their own profile using the token user_id
     customer = db.session.get(Customers, user_id)
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
@@ -99,7 +95,6 @@ def update_customer_without_id(user_id, role):
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
 
-    # Hash password if present
     if 'password' in customer_data and customer_data['password']:
         customer_data['password'] = generate_password_hash(customer_data['password'])
 
@@ -107,7 +102,6 @@ def update_customer_without_id(user_id, role):
         setattr(customer, key, value)
 
     db.session.commit()
-    print(f"Customer updated: {customer.first_name} {customer.last_name}")
     return customer_schema.jsonify(customer), 200
 
 @customers_bp.route('/<int:customer_id>', methods=['PUT'], strict_slashes=False)
@@ -118,7 +112,6 @@ def update_customer_by_id(user_id, role, customer_id):
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
 
-    # Only allow non-admins to update their own record
     if role != 'admin' and int(user_id) != int(customer_id):
         return jsonify({"message": "You do not have permission to update this customer."}), 403
 
@@ -127,7 +120,6 @@ def update_customer_by_id(user_id, role, customer_id):
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
 
-    # Hash password if present
     if 'password' in customer_data and customer_data['password']:
         customer_data['password'] = generate_password_hash(customer_data['password'])
 
@@ -135,7 +127,6 @@ def update_customer_by_id(user_id, role, customer_id):
         setattr(customer, key, value)
 
     db.session.commit()
-    print(f"Customer updated: {customer.first_name} {customer.last_name}")
     return customer_schema.jsonify(customer), 200
 
 #  =========================================================================
@@ -158,11 +149,9 @@ def delete_customer_by_id(user_id, role, customer_id):
     if not customer:
         return jsonify({"message": "Customer not found"}), 404
 
-    # Prevent admin from deleting themselves
     if int(user_id) == int(customer_id):
         return jsonify({"message": "Cannot delete your own account"}), 403
 
     db.session.delete(customer)
     db.session.commit()
-    print(f"Customer deleted: {customer.first_name} {customer.last_name}")
     return jsonify({"message": f"Customer {customer_id} deleted"}), 200

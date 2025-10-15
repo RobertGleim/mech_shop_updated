@@ -35,7 +35,7 @@ def encode_token(user_id, role='mechanic'):
         "exp": datetime.now(timezone.utc) + timedelta(hours=1),
         "iat": datetime.now(timezone.utc),
         "sub": str(user_id),
-        "role": role
+        "role": role  # <-- role is set here
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
@@ -44,37 +44,34 @@ def encode_token(user_id, role='mechanic'):
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        print(f"DEBUG: token_required called for endpoint: {request.path}")
         token = None
-
-        # 1) Try Authorization header
         auth_header = request.headers.get('Authorization')
+        print(f"DEBUG: Authorization header: {auth_header}")  # <--- Add this line
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ', 1)[1].strip()
-
-        # 2) Fallback to cookie (if using cookie-based storage)
         if not token:
             token = request.cookies.get('token')
-
-        # 3) Fallback to query parameter ?token=...
+            print(f"DEBUG: Cookie token: {token}")  # <--- Add this line
         if not token:
             token = request.args.get('token')
-
+            print(f"DEBUG: Query param token: {token}")  # <--- Add this line
         if not token:
+            print("DEBUG: No token found in request headers/cookies/query params")
             return jsonify({'message': 'Token is missing!'}), 401 
-
         try:
+            print(f"DEBUG: Decoding token: {token[:20]}...")
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             user_id = data.get("sub")
             role = data.get("role", "mechanic")
         except jose_exceptions.ExpiredSignatureError:
+            print("DEBUG: Token expired")
             return jsonify({"message": "Token is expired!"}), 401
-        except jose_exceptions.JWTError:
+        except jose_exceptions.JWTError as e:
+            print(f"DEBUG: Token invalid: {e}")
             return jsonify({"message": "Token is invalid!"}), 401
-
-        # Inject user_id and role into kwargs safely, then call the wrapped function
-        kwargs = dict(kwargs)  # copy to avoid mutating caller's dict
+        kwargs = dict(kwargs)
         kwargs['user_id'] = user_id
         kwargs['role'] = role
-
         return f(*args, **kwargs)
     return decorated
