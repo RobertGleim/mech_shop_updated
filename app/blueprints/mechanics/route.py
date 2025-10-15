@@ -191,12 +191,17 @@ def update_mechanic(user_id, role, mech_id):
 @token_required
 @role_required(['admin'])
 def delete_mechanic_by_id(user_id, role, mech_id):
+    # Protect the primary system mechanic (id == 1) from deletion
+    if int(mech_id) == 1:
+        current_app.logger.warning(f"Attempt to delete protected mechanic id=1 by user {user_id}")
+        return jsonify({"message": "Cannot delete protected mechanic (id=1)"}), 403
+
     mechanic = db.session.get(Mechanics, mech_id)
     if not mechanic:
         return jsonify({"message": "Mechanic not found"}), 404
     db.session.delete(mechanic)
     db.session.commit()
-    print(f"Mechanic deleted: {mechanic.first_name} {mechanic.last_name}")
+    current_app.logger.info(f"Mechanic deleted: {mechanic.first_name} {mechanic.last_name} (id={mech_id})")
     return jsonify({"message": f"Mechanic {mech_id} deleted"}), 200
 
 #  =========================================================================
@@ -211,8 +216,20 @@ def update_all_mechanics(user_id, role):
 @token_required
 @role_required(['admin'])
 def delete_all_mechanics(user_id, role):
+    # Do not allow deleting the protected mechanic with id == 1.
     mechanics = db.session.query(Mechanics).all()
-    for mechanic in mechanics:
-        db.session.delete(mechanic)
+    to_delete = [m for m in mechanics if int(getattr(m, 'id', 0)) != 1]
+    protected_present = any(int(getattr(m, 'id', 0)) == 1 for m in mechanics)
+
+    if not to_delete:
+        msg = "No mechanics deleted. Protected mechanic preserved." if protected_present else "No mechanics found to delete."
+        return jsonify({"message": msg}), 200
+
+    deleted_count = 0
+    for mech in to_delete:
+        db.session.delete(mech)
+        deleted_count += 1
     db.session.commit()
-    return jsonify({"message": "All mechanics deleted"}), 200
+
+    msg = f"Deleted {deleted_count} mechanics. Protected mechanic (id=1) preserved." if protected_present else f"Deleted {deleted_count} mechanics."
+    return jsonify({"message": msg}), 200
