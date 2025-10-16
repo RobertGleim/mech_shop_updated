@@ -22,8 +22,28 @@ def role_required(required_roles):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            # role is expected to be injected by token_required into kwargs
+            # role may be injected by token_required into kwargs, but don't rely on decorator order.
             role = kwargs.get('role')
+            if not role:
+                # attempt to extract token from same locations as token_required
+                token = None
+                auth_header = request.headers.get('Authorization')
+                if auth_header and auth_header.startswith('Bearer '):
+                    token = auth_header.split(' ', 1)[1].strip()
+                if not token:
+                    token = request.cookies.get('token')
+                if not token:
+                    token = request.args.get('token')
+                if not token:
+                    return jsonify({'message': 'Token is missing!'}), 401
+                try:
+                    data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+                    role = data.get("role", "mechanic")
+                except jose_exceptions.ExpiredSignatureError:
+                    return jsonify({"message": "Token is expired!"}), 401
+                except jose_exceptions.JWTError:
+                    return jsonify({"message": "Token is invalid!"}), 401
+
             if role not in required_roles:
                 return jsonify({'message': 'You do not have permission to access this resource.'}), 403
             return f(*args, **kwargs)
@@ -44,31 +64,23 @@ def encode_token(user_id, role='mechanic'):
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        print(f"DEBUG: token_required called for endpoint: {request.path}")
         token = None
         auth_header = request.headers.get('Authorization')
-        print(f"DEBUG: Authorization header: {auth_header}")  # <--- Add this line
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ', 1)[1].strip()
         if not token:
             token = request.cookies.get('token')
-            print(f"DEBUG: Cookie token: {token}")  # <--- Add this line
         if not token:
             token = request.args.get('token')
-            print(f"DEBUG: Query param token: {token}")  # <--- Add this line
         if not token:
-            print("DEBUG: No token found in request headers/cookies/query params")
             return jsonify({'message': 'Token is missing!'}), 401 
         try:
-            print(f"DEBUG: Decoding token: {token[:20]}...")
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             user_id = data.get("sub")
             role = data.get("role", "mechanic")
         except jose_exceptions.ExpiredSignatureError:
-            print("DEBUG: Token expired")
             return jsonify({"message": "Token is expired!"}), 401
         except jose_exceptions.JWTError as e:
-            print(f"DEBUG: Token invalid: {e}")
             return jsonify({"message": "Token is invalid!"}), 401
         kwargs = dict(kwargs)
         kwargs['user_id'] = user_id

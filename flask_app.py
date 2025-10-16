@@ -26,7 +26,7 @@ with app.app_context():
                 result = db.session.execute(text("PRAGMA table_info('mechanics')")).fetchall()
                 cols = [row[1] for row in result]
             except Exception as inner_e:
-                print(f"Could not determine mechanics table columns: {inner_e}")
+                # Could not determine mechanics table columns
                 cols = []
 
         if 'is_admin' not in cols:
@@ -44,14 +44,11 @@ with app.app_context():
             try:
                 db.session.execute(text(add_stmt))
                 db.session.commit()
-                print("Added is_admin column to mechanics table")
             except Exception as add_err:
-                print(f"Error adding is_admin column: {add_err}")
                 db.session.rollback()
         else:
-            print("is_admin column already exists")
+            pass
     except Exception as e:
-        print(f"Error checking/adding column: {e}")
         db.session.rollback()
     
     # Now continue with the normal initialization
@@ -61,9 +58,7 @@ with app.app_context():
     try:
         db.session.execute(text("DELETE FROM mechanics WHERE LOWER(email) = LOWER('robertgleim@email.com')"))
         db.session.commit()
-        print("Removed any existing users with that email")
     except Exception as e:
-        print(f"Error removing existing users: {e}")
         db.session.rollback()
     
     # Create the default admin mechanic with hashed password
@@ -82,14 +77,12 @@ with app.app_context():
         )
         db.session.add(admin_mechanic)
         db.session.commit()
-        print("Default admin mechanic created with hashed password")
         
         # Print verification
         result = db.session.execute(text("SELECT id, email, password FROM mechanics WHERE email = 'robertgleim@email.com'")).fetchone()
         if result:
-            print(f"User created with ID: {result[0]}, Email: {result[1]}, Password: {result[2][:20]}...")
+            pass
     except Exception as e:
-        print(f"Error setting up admin user: {e}")
         db.session.rollback()
 
 #  comment for git push test
